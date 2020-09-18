@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
-import 'package:tProject/scenes/mainpage.dart';
+import 'package:tProject/scenes/login.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,7 @@ Future<void> main() async {
         : FirebaseOptions(
             appId: '1:658445430000:android:0e42bdd1f974e92769e635',
             apiKey: 'AIzaSyAYMGtiSSQXoEzYruYwej05H3hsHRHlmRc',
-            messagingSenderId: '297855924061',
+             messagingSenderId: '297855924061',
             projectId: 'ziouan-vite-vite',
             databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
@@ -34,7 +35,10 @@ class MyApp extends StatelessWidget{
   Widget build(BuildContext context) {
     // TODO: implement build
     return MaterialApp(
-     home:MainPage()
+      theme: ThemeData(
+        fontFamily: 'Brand-Regular'
+      ),
+     home:LoginPage()
    );
   }
 }
