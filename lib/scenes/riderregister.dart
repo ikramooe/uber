@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/widgets/taxibutton.dart';
@@ -7,8 +8,30 @@ import '../brand-colors.dart';
 class RegisterPage extends StatelessWidget {
   @override
   static const String id = "register";
-
   
+  
+  var NameController = TextEditingController();
+  var EmailController = TextEditingController();
+  var PhoneController = TextEditingController();
+  var PasswordController = TextEditingController();
+
+  void RegisterUser() async {
+      try {
+            UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: EmailController.text,
+              password: PasswordController.text
+            );
+      } on FirebaseAuthException catch (e) {
+          if (e.code == 'weak-password') {
+            print('The password provided is too weak.');
+          } else if (e.code == 'email-already-in-use') {
+            print('The account already exists for that email.');
+          }
+      } catch (e) {
+          print(e.toString());
+      }
+} 
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -32,6 +55,7 @@ class RegisterPage extends StatelessWidget {
                   padding: const EdgeInsets.all(8.0),
                   child: Column(children: <Widget>[
                     TextField(
+                      controller: NameController,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
                           labelText: 'Nom',
@@ -42,6 +66,7 @@ class RegisterPage extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     TextField(
+                      controller: PhoneController,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                           labelText: 'Phone',
@@ -52,6 +77,7 @@ class RegisterPage extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     TextField(
+                      controller: EmailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                           labelText: 'Email',
@@ -63,6 +89,7 @@ class RegisterPage extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     TextField(
+                      controller: PasswordController,
                       obscureText: true,
                       decoration: InputDecoration(
                           labelText: 'Password',
@@ -74,11 +101,12 @@ class RegisterPage extends StatelessWidget {
                     ),
                     SizedBox(height: 50),
                     TaxiButton(
-                      title:'S\'inscrire',
-                      color:BrandColors.colorGreen,
-                      onPressed:(){}
-
-                    )
+                        title: 'S\'inscrire',
+                        color: BrandColors.colorGreen,
+                        onPressed: (){
+                       
+                        RegisterUser();}
+                  ),
                   ]),
                 ),
                 FlatButton(
