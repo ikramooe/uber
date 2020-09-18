@@ -11,18 +11,18 @@ Future<void> main() async {
     name: 'db2',
     options: Platform.isIOS || Platform.isMacOS
         ? FirebaseOptions(
-            appId: '1:63435892294:ios:542adb50a6ba2a48014c47',
-            apiKey: 'AIzaSyDiK4b4xLVPLlKTccBnwEupZXd_St6BsHM',
-            projectId: 'flutter-firebase-plugins',
-            messagingSenderId: '63435892294',
-            databaseURL: 'https://uber-87da6.firebaseio.com',
+            appId: '1:658445430000:ios:42ffd961aee52cbc69e635',
+            apiKey: 'AIzaSyCUSemoprJW5qYL2YCDlVJbjHHj9qBHMyQ',
+            projectId: 'ziouan-vite-vite',
+            messagingSenderId: '658445430000',
+            databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           )
         : FirebaseOptions(
-            appId: '1:63435892294:android:db60ae9e2d0cffa7014c47R',
-            apiKey: 'AIzaSyDDLHw4nf5GdGAUCcYHDuZVMQb5ERvS-Mw',
+            appId: '1:658445430000:android:0e42bdd1f974e92769e635',
+            apiKey: 'AIzaSyAYMGtiSSQXoEzYruYwej05H3hsHRHlmRc',
             messagingSenderId: '297855924061',
-            projectId: 'flutter-firebase-plugins',
-            databaseURL: 'https://uber-87da6.firebaseio.com',
+            projectId: 'ziouan-vite-vite',
+            databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
   );
   runApp(MyApp());
