@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tProject/brand-colors.dart';
 
 
 class LoginPage extends StatelessWidget {
@@ -71,7 +72,7 @@ class LoginPage extends StatelessWidget {
                     borderRadius:new BorderRadius.circular(25),
 
                   ),
-                  color:Colors.green,
+                  color:BrandColors.colorGreen,
                   textColor: Colors.white,
                   child: Container(
                     height: 50,
