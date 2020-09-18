@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
-import 'package:tProject/scenes/login.dart';
+import 'package:tProject/scenes/mainpage.dart';
+import 'package:tProject/scenes/riderlogin.dart';
+import 'package:tProject/scenes/riderregister.dart';
 
 
 Future<void> main() async {
@@ -38,7 +40,12 @@ class MyApp extends StatelessWidget{
       theme: ThemeData(
         fontFamily: 'Brand-Regular'
       ),
-     home:LoginPage()
+     initialRoute:RegisterPage.id,
+     routes: {
+       RegisterPage.id : (context)=>RegisterPage(),
+       LoginPage.id:(context)=>LoginPage(),
+       MainPage.id:(context)=>MainPage()
+     },
    );
   }
 }
