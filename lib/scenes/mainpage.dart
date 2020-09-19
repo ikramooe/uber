@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:tProject/styles/drawer.dart';
 
 class MainPage extends StatefulWidget {
   static const String id = "main";
@@ -12,6 +13,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   @override
+  GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
   double mapBottomPadding = 0;
@@ -24,6 +26,7 @@ class _MainPageState extends State<MainPage> {
 
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldkey,
       drawer: Container(
         width: 250,
         color: Colors.white,
@@ -38,36 +41,40 @@ class _MainPageState extends State<MainPage> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                     ),
-                    child: Row(
-                        Image.asset(
-                          "Images/user_icon.png",
-                          height: 60,
-                          width: 60,
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Text('phone'),
-                            SizedBox(
-                              height: 5,
-                            ),
-                            FlatButton(
-                              onPressed: () {},
-                              child: Text('voir profile'),
-                            )
-                          ],
-                        ))),
+                    child: Row(children: <Widget>[
+                      Image.asset(
+                        "Images/user_icon.png",
+                        height: 60,
+                        width: 60,
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text('phone'),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          FlatButton(
+                            onPressed: () {},
+                            child: Text('voir profile'),
+                          )
+                        ],
+                      )
+                    ])),
               ),
               SizedBox(
                 height: 10,
               ),
               ListTile(
                 leading: Icon(Icons.card_giftcard),
-                title: Text('Mes Points',style: TextStyle(fontSize: 16),),
-
+                title: Text('Mes Points', style: kDrawerItemStyle),
+              ),
+              ListTile(
+                leading: Icon(Icons.card_giftcard),
+                title: Text('two', style: kDrawerItemStyle),
               ),
             ],
           ),
@@ -88,6 +95,40 @@ class _MainPageState extends State<MainPage> {
               });
             },
           ),
+
+          // Menu button
+          Positioned(
+            top: 44,
+            left: 20,
+            child: GestureDetector(
+              onTap: () {
+                scaffoldkey.currentState.openDrawer();
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 5,
+                        spreadRadius: 0.5,
+                        offset: Offset(0.7, 0.7),
+                      )
+                    ]),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 20,
+                  child: Icon(
+                    Icons.menu,
+                    color: Colors.black38,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Search
           Positioned(
             left: 0,
             right: 0,
