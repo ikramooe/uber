@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';
+import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/scenes/riderregister.dart';
 
 
@@ -23,7 +24,7 @@ Future<void> main() async {
         : FirebaseOptions(
             appId: '1:658445430000:android:0e42bdd1f974e92769e635',
             apiKey: 'AIzaSyAYMGtiSSQXoEzYruYwej05H3hsHRHlmRc',
-             messagingSenderId: '297855924061',
+            messagingSenderId: '658445430000',
             projectId: 'ziouan-vite-vite',
             databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
@@ -40,11 +41,12 @@ class MyApp extends StatelessWidget{
       theme: ThemeData(
         fontFamily: 'Brand-Regular'
       ),
-     initialRoute:RegisterPage.id,
+     initialRoute:PhoneRegisterPage.id,
      routes: {
        RegisterPage.id : (context)=>RegisterPage(),
        LoginPage.id:(context)=>LoginPage(),
-       MainPage.id:(context)=>MainPage()
+       MainPage.id:(context)=>MainPage(),
+       PhoneRegisterPage.id:(context)=>PhoneRegisterPage()
      },
    );
   }
