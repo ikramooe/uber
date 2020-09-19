@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -16,7 +15,7 @@ class _MainPageState extends State<MainPage> {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
   double mapBottomPadding = 0;
-  double searchSheetHeight = (Platform.isIOS)  ? 300 : 275;
+  double searchSheetHeight = (Platform.isIOS) ? 300 : 275;
   static final CameraPosition _kLake = CameraPosition(
       bearing: 192.8334901395799,
       target: LatLng(37.43296265331129, -122.08832357078792),
@@ -33,22 +32,45 @@ class _MainPageState extends State<MainPage> {
             padding: EdgeInsets.all(0),
             children: <Widget>[
               Container(
+                color: Colors.white,
                 height: 160,
                 child: DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                  ),
-                    child:Row(
-                       
-                    )
-                  ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                    ),
+                    child: Row(
+                        Image.asset(
+                          "Images/user_icon.png",
+                          height: 60,
+                          width: 60,
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Text('phone'),
+                            SizedBox(
+                              height: 5,
+                            ),
+                            FlatButton(
+                              onPressed: () {},
+                              child: Text('voir profile'),
+                            )
+                          ],
+                        ))),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              ListTile(
+                leading: Icon(Icons.card_giftcard),
+                title: Text('Mes Points',style: TextStyle(fontSize: 16),),
 
-                  
-                ),
-              )
+              ),
             ],
           ),
-          
         ),
       ),
       body: Stack(
@@ -62,7 +84,7 @@ class _MainPageState extends State<MainPage> {
               _controller.complete(controller);
               mapController = controller;
               setState(() {
-                mapBottomPadding =(Platform.isAndroid) ? 280 : 270;
+                mapBottomPadding = (Platform.isAndroid) ? 280 : 270;
               });
             },
           ),
