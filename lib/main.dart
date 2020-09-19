@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget{
       theme: ThemeData(
         fontFamily: 'Brand-Regular'
       ),
-     initialRoute:PhoneRegisterPage.id,
+     initialRoute:MainPage.id,
      routes: {
        RegisterPage.id : (context)=>RegisterPage(),
        LoginPage.id:(context)=>LoginPage(),
