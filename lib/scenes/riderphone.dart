@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:international_phone_input/international_phone_input.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/widgets/taxibutton.dart';
@@ -24,8 +25,9 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
 
   var formKey;
 
-
   String status;
+
+  var phoneIsoCode;
   Future<void> _submit() async {
     var verifyPhoneNumber = await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: "+213796580458",
@@ -47,9 +49,7 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
         otpDialogBox(context).then((value) {});
       },
 
-      codeAutoRetrievalTimeout: (String verificationId) {
-        
-      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
     );
     await verifyPhoneNumber;
   }
@@ -63,6 +63,14 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
       setState(() {
         status = 'Something has gone wrong, please try later';
       });
+    });
+  }
+
+  void onPhoneNumberChange(
+      String number, String internationalizedPhoneNumber, String isoCode) {
+    print(number);
+    setState(() {
+      phoneNumber = number;
     });
   }
 
@@ -106,7 +114,7 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
             padding: EdgeInsets.all(8.0),
             child: Column(
               children: <Widget>[
-                SizedBox(height: 45),
+                SizedBox(height: 60),
                 Image(
                   alignment: Alignment.center,
                   height: 100,
@@ -114,31 +122,28 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
                   image: AssetImage("images/logo.png"),
                 ),
                 SizedBox(
-                  height: 10,
+                  height: 30,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(children: <Widget>[
-                    TextField(
-                      controller: PhoneController,
-                      keyboardType: TextInputType.phone,
-                      onChanged: (value) => phoneNumber = value,
-                      decoration: InputDecoration(
-                          labelText: 'Phone',
-                          labelStyle: TextStyle(fontSize: 14.0),
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                          )),
-                      style: TextStyle(fontSize: 14),
+                    InternationalPhoneInput(
+                      onPhoneNumberChange: onPhoneNumberChange,
+                      initialSelection: phoneIsoCode,
+                      enabledCountries: ['+213', '+1'],
+                      labelText: "Phone Number",
+                      showCountryCodes: true,
+                      showCountryFlags: true,
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 35),
                   ]),
                 ),
-                RaisedButton(
+                TaxiButton(
+                    title: 'Verifier',
+                    color: BrandColors.colorGreen,
                     onPressed: () {
                       _submit();
-                    },
-                    child: Text('Verifier'))
+                    })
               ],
             ),
           ),
