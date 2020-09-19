@@ -25,14 +25,46 @@ class _MainPageState extends State<MainPage> {
 
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Hello world')),
-      body: Center(
-        child: MaterialButton(
-          onPressed: () {
-            DatabaseReference dbref =
-                FirebaseDatabase.instance.reference().child('Test');
-            dbref.set('IsConnected');
-          },
+      drawer: Container(
+        width: 250,
+        color: Colors.white,
+        child: Drawer(
+          child: ListView(
+            padding: EdgeInsets.all(0),
+            children: <Widget>[
+              Container(
+                height: 160,
+                child: DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                    child:Row(
+                       
+                    )
+                  ),
+
+                  
+                ),
+              )
+            ],
+          ),
+          
+        ),
+      ),
+      body: Stack(
+        children: <Widget>[
+          GoogleMap(
+            padding: EdgeInsets.only(bottom: mapBottomPadding),
+            mapType: MapType.normal,
+            myLocationButtonEnabled: true,
+            initialCameraPosition: _kLake,
+            onMapCreated: (GoogleMapController controller) {
+              _controller.complete(controller);
+              mapController = controller;
+              setState(() {
+                mapBottomPadding =(Platform.isAndroid) ? 280 : 270;
+              });
+            },
           ),
           Positioned(
             left: 0,
