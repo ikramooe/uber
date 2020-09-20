@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tProject/styles/drawer.dart';
 
@@ -12,12 +13,23 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  @override
+  //Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
+  Position currentPosition;
+
+  void setupPoisitionLocator() async {
+    currentPosition =
+        await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    LatLng pos = LatLng(currentPosition.latitude, currentPosition.longitude);
+    CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
+    mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
+  }
+
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
+
   double mapBottomPadding = 0;
-  double searchSheetHeight = (Platform.isIOS) ? 300 : 275;
+  double searchSheetHeight = (Platform.isIOS) ? 300 : 0;
   static final CameraPosition _kLake = CameraPosition(
       bearing: 192.8334901395799,
       target: LatLng(37.43296265331129, -122.08832357078792),
@@ -85,15 +97,26 @@ class _MainPageState extends State<MainPage> {
           GoogleMap(
             padding: EdgeInsets.only(bottom: mapBottomPadding),
             mapType: MapType.normal,
+            myLocationEnabled: true,
             myLocationButtonEnabled: true,
+            zoomGesturesEnabled: true,
+            zoomControlsEnabled: true,
+            
             initialCameraPosition: _kLake,
+          
             onMapCreated: (GoogleMapController controller) {
+              
               _controller.complete(controller);
               mapController = controller;
+              
               setState(() {
-                mapBottomPadding = (Platform.isAndroid) ? 280 : 270;
+                mapBottomPadding = (Platform.isAndroid) ? 200 : 270;
               });
+              //
+              setupPoisitionLocator();
             },
+            
+            
           ),
 
           // Menu button
@@ -134,7 +157,7 @@ class _MainPageState extends State<MainPage> {
             right: 0,
             bottom: 0,
             child: Container(
-              height: searchSheetHeight,
+              height: 200,
               decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(

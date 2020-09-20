@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:international_phone_input/international_phone_input.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/widgets/taxibutton.dart';
 
@@ -60,10 +61,20 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
     FirebaseAuth.instance
         .signInWithCredential(_authCredential)
         .catchError((error) {
-      setState(() {
-        status = 'Something has gone wrong, please try later';
-      });
+      
     });
+
+  FirebaseAuth.instance
+  .authStateChanges()
+  .listen((User user) {
+    if (user == null) {
+      print('User is currently signed out!');
+    } else {
+      Navigator.pushNamedAndRemoveUntil(
+        context, MainPage.id, (route) => false);
+                    
+    }
+  });
   }
 
   void onPhoneNumberChange(
