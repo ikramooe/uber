@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/brand-colors.dart';
 import 'package:tProject/dataproviders/appdata.dart';
+import 'package:tProject/globals.dart';
+import 'package:tProject/helpers/requesthelper.dart';
 
 class SearchPAGE extends StatefulWidget {
   @override
@@ -18,6 +20,16 @@ class _SearchPAGEState extends State<SearchPAGE> {
   void setFocus() {
     if (!focused) FocusScope.of(context).requestFocus(focus);
     focused = true;
+  }
+
+  void searchPlace(String placeName) async {
+    if (placeName.length > 1) {
+      String $url =
+          "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${placeName}&key=$mapkey&sessiontoken=1234567890&components=country:dz";
+      var response = await RequestHelper.getRequest($url);
+      if (response == "failed") return;
+      print(response);
+    }
   }
 
   Widget build(BuildContext context) {
@@ -108,6 +120,9 @@ class _SearchPAGEState extends State<SearchPAGE> {
                     child: Padding(
                       padding: const EdgeInsets.all(2.0),
                       child: TextField(
+                        onChanged: (value) {
+                          searchPlace(value);
+                        },
                         controller: destinationController,
                         decoration: InputDecoration(
                             hintText: 'where ',
