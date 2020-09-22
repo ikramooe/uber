@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
 
@@ -25,7 +26,7 @@ class _MainPageState extends State<MainPage> {
     CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
-        await HelperMethods.findCoordinatesAddress(currentPosition,context);
+        await HelperMethods.findCoordinatesAddress(currentPosition);
       
     print(address);
   }
@@ -185,27 +186,34 @@ class _MainPageState extends State<MainPage> {
                         style:
                             TextStyle(fontSize: 18, fontFamily: 'Brand-Bold')),
                     SizedBox(height: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 5.0,
-                                spreadRadius: 0.5,
-                                offset: Offset(0.7, 0.7))
-                          ]),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Row(
-                          children: <Widget>[
-                            Icon(Icons.search, color: Colors.blueAccent),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            Text('Destination'),
-                          ],
+                    //recherche
+                    GestureDetector(
+                      onTap: ()=>{
+                        Navigator.push(context, MaterialPageRoute(
+                          builder:(context)=>SearchPAGE() ))
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 5.0,
+                                  spreadRadius: 0.5,
+                                  offset: Offset(0.7, 0.7))
+                            ]),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(Icons.search, color: Colors.blueAccent),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text('Destination'),
+                            ],
+                          ),
                         ),
                       ),
                     )
