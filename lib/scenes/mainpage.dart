@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tProject/styles/drawer.dart';
+import 'package:tProject/helpers/helpermethodes.dart';
 
 class MainPage extends StatefulWidget {
   static const String id = "main";
@@ -17,11 +18,16 @@ class _MainPageState extends State<MainPage> {
   Position currentPosition;
 
   void setupPoisitionLocator() async {
+    //Position position = await getCurrentPosition()
     currentPosition =
         await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     LatLng pos = LatLng(currentPosition.latitude, currentPosition.longitude);
     CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
+    String address =
+        await HelperMethods.findCoordinatesAddress(currentPosition,context);
+      
+    print(address);
   }
 
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
@@ -101,22 +107,17 @@ class _MainPageState extends State<MainPage> {
             myLocationButtonEnabled: true,
             zoomGesturesEnabled: true,
             zoomControlsEnabled: true,
-            
             initialCameraPosition: _kLake,
-          
             onMapCreated: (GoogleMapController controller) {
-              
               _controller.complete(controller);
               mapController = controller;
-              
+
               setState(() {
                 mapBottomPadding = (Platform.isAndroid) ? 200 : 270;
               });
               //
               setupPoisitionLocator();
             },
-            
-            
           ),
 
           // Menu button

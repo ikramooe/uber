@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/scenes/riderregister.dart';
+
+import 'dataproviders/appdata.dart';
 
 
 Future<void> main() async {
@@ -37,17 +40,20 @@ class MyApp extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return MaterialApp(
-      theme: ThemeData(
-        fontFamily: 'Brand-Regular'
-      ),
-     initialRoute:PhoneRegisterPage.id,
-     routes: {
-       RegisterPage.id : (context)=>RegisterPage(),
-       LoginPage.id:(context)=>LoginPage(),
-       MainPage.id:(context)=>MainPage(),
-       PhoneRegisterPage.id:(context)=>PhoneRegisterPage()
-     },
-   );
+    return ChangeNotifierProvider(
+        create:(context)=>AppData(),
+        child: MaterialApp(
+        theme: ThemeData(
+          fontFamily: 'Brand-Regular'
+        ),
+       initialRoute:PhoneRegisterPage.id,
+       routes: {
+         RegisterPage.id : (context)=>RegisterPage(),
+         LoginPage.id:(context)=>LoginPage(),
+         MainPage.id:(context)=>MainPage(),
+         PhoneRegisterPage.id:(context)=>PhoneRegisterPage()
+       },
+   ),
+    );
   }
 }
