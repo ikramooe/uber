@@ -2,8 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:provider/provider.dart';
+import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
@@ -38,6 +43,9 @@ class _MainPageState extends State<MainPage> {
 
   double mapBottomPadding = 0;
   double searchSheetHeight = (Platform.isIOS) ? 300 : 0;
+  List<LatLng> polylineCoordinates = [];
+  Set<Polyline> _polylines = {};
+
   static final CameraPosition _kLake = CameraPosition(
       bearing: 192.8334901395799,
       target: LatLng(37.43296265331129, -122.08832357078792),
@@ -109,6 +117,7 @@ class _MainPageState extends State<MainPage> {
             myLocationButtonEnabled: true,
             zoomGesturesEnabled: true,
             zoomControlsEnabled: true,
+            polylines: _polylines,
             initialCameraPosition: _kLake,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
@@ -189,11 +198,14 @@ class _MainPageState extends State<MainPage> {
                     SizedBox(height: 20),
                     //recherche
                     GestureDetector(
-                      onTap: () => {
-                        Navigator.push(
+                      onTap: () async {
+                        var response = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => SearchPAGE()))
+                                builder: (context) => SearchPAGE()));
+                        if (response == 'getDirection') {
+                          await getDirection();
+                        }
                       },
                       child: Container(
                         decoration: BoxDecoration(
@@ -228,5 +240,58 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
     );
+  }
+
+  Future<void> getDirection() async {
+    var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
+    var destination =
+        Provider.of<AppData>(context, listen: false).destinationAddress;
+    var pickLatLng = LatLng(pickup.latitude, pickup.longitude);
+    var destinationLatLng = LatLng(destination.latitude, destination.longitude);
+    var pr = ProgressDialog(context,
+        type: ProgressDialogType.Normal, isDismissible: false, showLogs: true);
+
+    pr.style(
+        message: 'Searching...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
+
+    await pr.show();
+
+    var thisDetails =
+        await HelperMethods.getDirectionDetails(pickLatLng, destinationLatLng);
+
+    pr.hide();
+    PolylinePoints polylinePoints = PolylinePoints();
+    List<PointLatLng> results =
+        polylinePoints.decodePolyline(thisDetails.encodePoints);
+    polylineCoordinates.clear();
+    if (results.isNotEmpty) {
+      results.forEach((PointLatLng points) {
+        polylineCoordinates.add(LatLng(points.latitude, points.longitude));
+      });
+      _polylines.clear();
+      setState(() {
+        Polyline line = Polyline(
+            polylineId: PolylineId('polyid'),
+            color: Color.fromARGB(255, 95, 109, 237),
+            points: polylineCoordinates,
+            jointType: JointType.round,
+            width: 4,
+            startCap: Cap.roundCap,
+            endCap: Cap.roundCap,
+            geodesic: true);
+        _polylines.add(line);
+      });
+    }
   }
 }

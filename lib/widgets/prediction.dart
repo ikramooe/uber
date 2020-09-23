@@ -40,6 +40,7 @@ class PredictionTile extends StatelessWidget {
     pr.hide();
     if (response == "failed") return;
     if (response['status'] == "OK") {
+      //print(response['result']['name']);
       Address thisPlace = Address();
 
       thisPlace.placeName = response['result']['name'];
@@ -49,13 +50,10 @@ class PredictionTile extends StatelessWidget {
 
       Provider.of<AppData>(context, listen: false)
           .updateDestinationAddress(thisPlace);
-      print("olaaa");
-      var x = response['result'];
-      //x = jsonDecode(response);
-      //print(x);
-      //print(jsonDecode(response).result.name);
-      //print((String)response['result'].name);
-      //print(response['result']['name']);
+      //print("olaaa");
+      //var x = response['result'];
+
+      Navigator.pop(context,'getDirection');
     }
   }
 
