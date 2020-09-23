@@ -292,6 +292,28 @@ class _MainPageState extends State<MainPage> {
             geodesic: true);
         _polylines.add(line);
       });
+
+      // fit into map
+      LatLngBounds bounds;
+      if (pickLatLng.latitude > destinationLatLng.latitude &&
+          pickLatLng.longitude > destinationLatLng.longitude)
+        bounds =
+            LatLngBounds(southwest: destinationLatLng, northeast: pickLatLng);
+      else if (pickLatLng.longitude > destinationLatLng.longitude)
+        bounds = LatLngBounds(
+            southwest: LatLng(pickLatLng.latitude, destinationLatLng.longitude),
+            northeast:
+                LatLng(destinationLatLng.latitude, pickLatLng.longitude));
+      else if (pickLatLng.latitude > destinationLatLng.latitude)
+        bounds = LatLngBounds(
+            southwest: LatLng(destinationLatLng.latitude, pickLatLng.longitude),
+            northeast:
+                LatLng(pickLatLng.latitude, destinationLatLng.longitude));
+      else
+        bounds =
+            LatLngBounds(southwest: pickLatLng, northeast: destinationLatLng);
+
+      mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 70));
     }
   }
 }
