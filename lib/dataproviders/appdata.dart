@@ -3,11 +3,14 @@ import 'package:tProject/datamodels/address.dart';
 
 class AppData extends ChangeNotifier {
   Address pickupAddress;
+  Address destinationAddress;
   void updatePickUpAddress(Address adresse) {
-    print("heeerreeeeeee");
-    print(adresse);
     pickupAddress = adresse;
-    print(pickupAddress.placeName);
+    notifyListeners();
+  }
+
+  void updateDestinationAddress(Address destination) {
+    destinationAddress = destination;
     notifyListeners();
   }
 }

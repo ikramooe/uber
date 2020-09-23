@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:international_phone_input/international_phone_input.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:tProject/scenes/mainpage.dart';
-import 'package:tProject/scenes/riderlogin.dart';
+
 import 'package:tProject/widgets/taxibutton.dart';
 
 import '../brand-colors.dart';
