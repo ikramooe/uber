@@ -10,16 +10,28 @@ class PredictionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Row(
-        children: <Widget>[
-          Icon(Icons.location_on, color: BrandColors.colorDimText),
-          SizedBox(
-            width: 12,
+      child: Column(
+
+        children: [
+          SizedBox(height:8.0),
+          Row(
+            children: <Widget>[
+              Icon(Icons.location_on, color: BrandColors.colorDimText),
+              SizedBox(
+                width: 12,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(prediction.mainText,overflow:TextOverflow.ellipsis,maxLines: 1,), 
+                    SizedBox(height:2),
+                    Text(prediction.secondaryText , overflow:TextOverflow.ellipsis,maxLines: 1)],
+                ),
+              )
+            ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[Text(prediction.mainText), Text(prediction.secondaryText)],
-          )
+          SizedBox(height:8.0),
         ],
       ),
     );

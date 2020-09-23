@@ -19,22 +19,33 @@ class _SearchPAGEState extends State<SearchPAGE> {
   var destinationController = TextEditingController();
   var focus = FocusNode();
   bool focused = false;
+
+  var thisList = [];
   void setFocus() {
     if (!focused) FocusScope.of(context).requestFocus(focus);
     focused = true;
   }
 
   void searchPlace(String placeName) async {
+    print(placeName);
+    
+
     if (placeName.length > 1) {
       String $url =
           "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${placeName}&key=$mapkey&sessiontoken=1234567890&components=country:dz";
       var response = await RequestHelper.getRequest($url);
+      print("reeeeeeeeeeeeeeeeeeeeeeeeepppppppppppppp");
+
+      print(response);
       if (response == "failed") return;
+      print('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
       if (response['status'] == "OK") {
         var predictionjson = response['predictions'];
-        var thisList =
-            (predictionjson as List).map((e) => Prediction.fromJson(e)).toList();
+        thisList = (predictionjson as List)
+            .map((e) => Prediction.fromJson(e))
+            .toList();
       }
+      print(response);
     }
   }
 
@@ -46,7 +57,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
     return Scaffold(
         body: Column(children: <Widget>[
       Container(
-        height: 220,
+        height: 210,
         decoration: BoxDecoration(color: Colors.white, boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -60,7 +71,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
               const EdgeInsets.only(left: 24, right: 24, bottom: 20, top: 48),
           child: Column(children: <Widget>[
             SizedBox(
-              height: 5,
+              height: 2,
             ),
             Stack(
               children: <Widget>[
@@ -76,7 +87,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
               ],
             ),
             SizedBox(
-              height: 20,
+              height: 15,
             ),
             Row(
               children: <Widget>[
@@ -147,12 +158,30 @@ class _SearchPAGEState extends State<SearchPAGE> {
           ]),
         ),
       ),
-      //list view 
-   
-       // PredictionTile()
+      //list view
+      (thisList.length > 0)
+          ? Padding(
+              padding:
+              const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              child: ListView.separated(
+                padding: EdgeInsets.all(0),
+                itemBuilder: (context, index) {
+                  print(thisList[index].mainText);
+                  print(thisList[index].secondaryText);
+                  return PredictionTile(
+                    prediction: thisList[index],
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) =>
+                    Divider(),
+                itemCount: thisList.length,
+                shrinkWrap: true,
+                physics: ClampingScrollPhysics(),
+              ),
+            )
+          // PredictionTile()
 
-      
+          : Container()
     ]));
   }
 }
-
