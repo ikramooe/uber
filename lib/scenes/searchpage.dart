@@ -28,24 +28,23 @@ class _SearchPAGEState extends State<SearchPAGE> {
 
   void searchPlace(String placeName) async {
     print(placeName);
-    
 
     if (placeName.length > 1) {
       String $url =
           "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${placeName}&key=$mapkey&sessiontoken=1234567890&components=country:dz";
       var response = await RequestHelper.getRequest($url);
-      print("reeeeeeeeeeeeeeeeeeeeeeeeepppppppppppppp");
+      //print("reeeeeeeeeeeeeeeeeeeeeeeeepppppppppppppp");
 
-      print(response);
+      //print(response);
       if (response == "failed") return;
-      print('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+      //print('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
       if (response['status'] == "OK") {
         var predictionjson = response['predictions'];
         thisList = (predictionjson as List)
             .map((e) => Prediction.fromJson(e))
             .toList();
       }
-      print(response);
+      //print(response);
     }
   }
 
@@ -54,6 +53,8 @@ class _SearchPAGEState extends State<SearchPAGE> {
     String address =
         Provider.of<AppData>(context).pickupAddress.placeName ?? '';
     pickupController.text = address;
+    print('we ain\'t never getting older');
+    print(address);
     return Scaffold(
         body: Column(children: <Widget>[
       Container(
@@ -105,7 +106,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
                       child: TextField(
                         controller: pickupController,
                         decoration: InputDecoration(
-                            hintText: 'location',
+                            hintText: address,
                             fillColor: BrandColors.colorLightGrayFair,
                             filled: true,
                             border: InputBorder.none,
@@ -162,7 +163,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
       (thisList.length > 0)
           ? Padding(
               padding:
-              const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
               child: ListView.separated(
                 padding: EdgeInsets.all(0),
                 itemBuilder: (context, index) {

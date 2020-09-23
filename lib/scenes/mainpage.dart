@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
@@ -20,15 +22,16 @@ class _MainPageState extends State<MainPage> {
 
   void setupPoisitionLocator() async {
     //Position position = await getCurrentPosition()
+    print('hey ');
     currentPosition =
         await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     LatLng pos = LatLng(currentPosition.latitude, currentPosition.longitude);
     CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
-        await HelperMethods.findCoordinatesAddress(currentPosition,context);
-      
-
+        await HelperMethods.findCoordinatesAddress(currentPosition, context);
+    print("meeeeeeeeeeeeeeeeeee");
+    print(address);
   }
 
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
@@ -182,15 +185,17 @@ class _MainPageState extends State<MainPage> {
                       height: 5,
                     ),
                     Text('Ziouane Vite Vite', style: TextStyle(fontSize: 10)),
-                    Text('Cherchez une position ',
+                    Text('rerre',
                         style:
                             TextStyle(fontSize: 18, fontFamily: 'Brand-Bold')),
                     SizedBox(height: 20),
                     //recherche
                     GestureDetector(
-                      onTap: ()=>{
-                        Navigator.push(context, MaterialPageRoute(
-                          builder:(context)=>SearchPAGE() ))
+                      onTap: () => {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SearchPAGE()))
                       },
                       child: Container(
                         decoration: BoxDecoration(
