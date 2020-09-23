@@ -2,9 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/brand-colors.dart';
+import 'package:tProject/datamodels/prediction.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/globals.dart';
 import 'package:tProject/helpers/requesthelper.dart';
+import 'package:tProject/widgets/prediction.dart';
 
 class SearchPAGE extends StatefulWidget {
   @override
@@ -28,7 +30,11 @@ class _SearchPAGEState extends State<SearchPAGE> {
           "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${placeName}&key=$mapkey&sessiontoken=1234567890&components=country:dz";
       var response = await RequestHelper.getRequest($url);
       if (response == "failed") return;
-      print(response);
+      if (response['status'] == "OK") {
+        var predictionjson = response['predictions'];
+        var thisList =
+            (predictionjson as List).map((e) => Prediction.fromJson(e)).toList();
+      }
     }
   }
 
@@ -140,7 +146,13 @@ class _SearchPAGEState extends State<SearchPAGE> {
             )
           ]),
         ),
-      )
+      ),
+      //list view 
+   
+       // PredictionTile()
+
+      
     ]));
   }
 }
+

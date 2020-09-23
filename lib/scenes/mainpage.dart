@@ -26,9 +26,9 @@ class _MainPageState extends State<MainPage> {
     CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
-        await HelperMethods.findCoordinatesAddress(currentPosition);
+        await HelperMethods.findCoordinatesAddress(currentPosition,context);
       
-    print(address);
+
   }
 
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
