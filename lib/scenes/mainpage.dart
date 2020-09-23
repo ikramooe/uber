@@ -30,8 +30,8 @@ class _MainPageState extends State<MainPage> {
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
         await HelperMethods.findCoordinatesAddress(currentPosition, context);
-    print("meeeeeeeeeeeeeeeeeee");
-    print(address);
+    //print("meeeeeeeeeeeeeeeeeee");
+    //print(address);
   }
 
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();

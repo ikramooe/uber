@@ -29,8 +29,7 @@ class HelperMethods {
       pickupAddress.longitude = position.longitude;
       pickupAddress.latitude = position.latitude;
       pickupAddress.placeFormattedAddress = placeAddress;
-      //print("pickup");
-      //print(placeAddress);
+      pickupAddress.placeName = placeAddress;      
       Provider.of<AppData>(context, listen: false)
           .updatePickUpAddress(pickupAddress);
     }

@@ -5,8 +5,9 @@ class AppData extends ChangeNotifier {
   Address pickupAddress;
   void updatePickUpAddress(Address adresse) {
     print("heeerreeeeeee");
+    print(adresse);
     pickupAddress = adresse;
-    print(pickupAddress);
+    print(pickupAddress.placeName);
     notifyListeners();
   }
 }

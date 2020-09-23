@@ -28,24 +28,23 @@ class _SearchPAGEState extends State<SearchPAGE> {
 
   void searchPlace(String placeName) async {
     print(placeName);
-
+    print(placeName.length);
     if (placeName.length > 1) {
       String $url =
           "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${placeName}&key=$mapkey&sessiontoken=1234567890&components=country:dz";
       var response = await RequestHelper.getRequest($url);
-      //print("reeeeeeeeeeeeeeeeeeeeeeeeepppppppppppppp");
 
-      //print(response);
       if (response == "failed") return;
-      //print('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+      
       if (response['status'] == "OK") {
         var predictionjson = response['predictions'];
         thisList = (predictionjson as List)
             .map((e) => Prediction.fromJson(e))
             .toList();
       }
-      //print(response);
+      
     }
+    
   }
 
   Widget build(BuildContext context) {
