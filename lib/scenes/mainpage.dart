@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:provider/provider.dart';
+import 'package:tProject/brand-colors.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
@@ -45,6 +46,8 @@ class _MainPageState extends State<MainPage> {
   double searchSheetHeight = (Platform.isIOS) ? 300 : 0;
   List<LatLng> polylineCoordinates = [];
   Set<Polyline> _polylines = {};
+  Set<Marker> _markers = {};
+  Set<Circle> _circles = {};
 
   static final CameraPosition _kLake = CameraPosition(
       bearing: 192.8334901395799,
@@ -118,6 +121,8 @@ class _MainPageState extends State<MainPage> {
             zoomGesturesEnabled: true,
             zoomControlsEnabled: true,
             polylines: _polylines,
+            markers: _markers,
+            circles: _circles,
             initialCameraPosition: _kLake,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
@@ -314,6 +319,45 @@ class _MainPageState extends State<MainPage> {
             LatLngBounds(southwest: pickLatLng, northeast: destinationLatLng);
 
       mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 70));
-    }
+      Marker pickupMarker = new Marker(
+          markerId: MarkerId('pickup'),
+          position: pickLatLng,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          infoWindow:
+              InfoWindow(title: pickup.placeName, snippet: 'My Location'));
+      Marker destinationMarker = new Marker(
+          markerId: MarkerId('destination'),
+          position: destinationLatLng,
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          infoWindow:
+              InfoWindow(title: destination.placeName, snippet: 'Destination'));
+      setState(() {
+        _markers.add(pickupMarker);
+        _markers.add(destinationMarker);
+      });
+
+      Circle pickupCircle = Circle(
+          circleId: CircleId('pickup'),
+          strokeColor: Colors.green,
+          strokeWidth: 3,
+          radius: 12,
+          center: pickLatLng,
+          fillColor: BrandColors.colorGreen);
+
+      Circle destinationCircle = Circle(
+          circleId: CircleId('destination'),
+          strokeColor: BrandColors.colorAccentPurple,
+          strokeWidth: 3,
+          radius: 12,
+          center: destinationLatLng,
+          fillColor: BrandColors.colorAccentPurple);
+
+      setState(() {
+      _circles.add(pickupCircle);
+      _circles.add(destinationCircle);
+  
+      });  
+          }
   }
 }
