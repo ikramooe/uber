@@ -9,13 +9,11 @@ import 'package:tProject/widgets/taxibutton.dart';
 import '../brand-colors.dart';
 
 class PhoneRegisterPage extends StatefulWidget {
-  @override
   static const String id = "registerphone";
   _PhoneRegisterState createState() => _PhoneRegisterState();
 }
 
 class _PhoneRegisterState extends State<PhoneRegisterPage> {
-  @override
   String phoneNumber = "";
   String smsCode;
   String verificationCode;
@@ -41,7 +39,7 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
         if (e.code == 'invalid-phone-number') {
           print('The provided phone number is not valid.');
         }
-        ;
+        
       },
       // sms sent
       codeSent: (String verificationId, int resendToken) {
@@ -60,21 +58,16 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
         verificationId: verificationCode, smsCode: smsCode);
     FirebaseAuth.instance
         .signInWithCredential(_authCredential)
-        .catchError((error) {
-      
-    });
+        .catchError((error) {});
 
-  FirebaseAuth.instance
-  .authStateChanges()
-  .listen((User user) {
-    if (user == null) {
-      print('User is currently signed out!');
-    } else {
-      Navigator.pushNamedAndRemoveUntil(
-        context, MainPage.id, (route) => false);
-                    
-    }
-  });
+    FirebaseAuth.instance.authStateChanges().listen((User user) {
+      if (user == null) {
+        print('User is currently signed out!');
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, MainPage.id, (route) => false);
+      }
+    });
   }
 
   void onPhoneNumberChange(
@@ -175,7 +168,6 @@ class Pin extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: PinCodeTextField(
             appContext: context,
-
             pastedTextStyle: TextStyle(
               color: Colors.green.shade600,
               fontWeight: FontWeight.bold,
@@ -203,15 +195,13 @@ class Pin extends StatelessWidget {
             onCompleted: (v) {
               print("Completed");
             },
-            
             onChanged: (value) {
               print(value);
               code = value;
             },
             beforeTextPaste: (text) {
               print("Allowing to paste $text");
-              
-              
+
               return true;
             },
           )),

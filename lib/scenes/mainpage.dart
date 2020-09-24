@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart';
+
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/brand-colors.dart';
+import 'package:tProject/datamodels/datadetails.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
@@ -209,6 +210,7 @@ class _MainPageState extends State<MainPage> {
                             MaterialPageRoute(
                                 builder: (context) => SearchPAGE()));
                         if (response == 'getDirection') {
+                          print("je suis la ");
                           await getDirection();
                         }
                       },
@@ -248,14 +250,16 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> getDirection() async {
+    print("hello world");
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination =
         Provider.of<AppData>(context, listen: false).destinationAddress;
     var pickLatLng = LatLng(pickup.latitude, pickup.longitude);
     var destinationLatLng = LatLng(destination.latitude, destination.longitude);
+    
     var pr = ProgressDialog(context,
         type: ProgressDialogType.Normal, isDismissible: false, showLogs: true);
-
+    
     pr.style(
         message: 'Searching...',
         borderRadius: 10.0,
@@ -271,9 +275,12 @@ class _MainPageState extends State<MainPage> {
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
 
     await pr.show();
+    
+    DirectionDetails thisDetails =
+        await HelperMethods.getDirectionDetails(pickLatLng,destinationLatLng);
 
-    var thisDetails =
-        await HelperMethods.getDirectionDetails(pickLatLng, destinationLatLng);
+    //print('detaaaiiilllsss');
+    //print(thisDetails);
 
     pr.hide();
     PolylinePoints polylinePoints = PolylinePoints();
@@ -354,10 +361,9 @@ class _MainPageState extends State<MainPage> {
           fillColor: BrandColors.colorAccentPurple);
 
       setState(() {
-      _circles.add(pickupCircle);
-      _circles.add(destinationCircle);
-  
-      });  
-          }
+        _circles.add(pickupCircle);
+        _circles.add(destinationCircle);
+      });
+    }
   }
 }

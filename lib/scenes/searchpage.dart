@@ -14,7 +14,6 @@ class SearchPAGE extends StatefulWidget {
 }
 
 class _SearchPAGEState extends State<SearchPAGE> {
-  @override
   var pickupController = TextEditingController();
   var destinationController = TextEditingController();
   var focus = FocusNode();
@@ -26,24 +25,29 @@ class _SearchPAGEState extends State<SearchPAGE> {
     focused = true;
   }
 
-  Future<List> searchPlace(String placeName) async {
-    print(placeName);
-    print(placeName.length);
+  void searchPlace(String placeName) async {
+    var thisLis = [];
+    //print(placeName);
+    //print(placeName.length);
     if (placeName.length > 1) {
       String $url =
           "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${placeName}&key=$mapkey&sessiontoken=1234567890&components=country:dz";
       var response = await RequestHelper.getRequest($url);
 
-      if (response == "failed") return[];
+      if (response == "failed") return;
 
       if (response['status'] == "OK") {
         var predictionjson = response['predictions'];
-        thisList = (predictionjson as List)
+        thisLis = (predictionjson as List)
             .map((e) => Prediction.fromJson(e))
             .toList();
       }
     }
-    return thisList;
+    setState(() {
+      thisList = [];
+      thisList = thisLis;
+    });
+    
   }
 
   Widget build(BuildContext context) {
@@ -51,11 +55,11 @@ class _SearchPAGEState extends State<SearchPAGE> {
     String address =
         Provider.of<AppData>(context).pickupAddress.placeName ?? '';
     pickupController.text = address;
-    print('we ain\'t never getting older');
-    print(address);
+    //print('we ain\'t never getting older');
+    //print(address);
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(children: <Widget>[
+        body: SingleChildScrollView(
+      child: Column(children: <Widget>[
         Container(
           height: 210,
           decoration: BoxDecoration(color: Colors.white, boxShadow: [
@@ -157,17 +161,17 @@ class _SearchPAGEState extends State<SearchPAGE> {
               )
             ]),
           ),
-      ),
-      //list view
-      (thisList.length > 0)
+        ),
+        //list view
+        (thisList.length > 0)
             ? Padding(
                 padding:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
                 child: ListView.separated(
                   padding: EdgeInsets.all(0),
                   itemBuilder: (context, index) {
-                    print(thisList[index].mainText);
-                    print(thisList[index].secondaryText);
+                    //print(thisList[index].mainText);
+                    //print(thisList[index].secondaryText);
                     return PredictionTile(
                       prediction: thisList[index],
                     );
@@ -182,7 +186,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
             // PredictionTile()
 
             : Container()
-    ]),
-        ));
+      ]),
+    ));
   }
 }

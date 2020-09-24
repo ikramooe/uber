@@ -6,7 +6,6 @@ import 'package:tProject/widgets/taxibutton.dart';
 import '../brand-colors.dart';
 
 class RegisterPage extends StatelessWidget {
-  @override
   static const String id = "register";
   
   

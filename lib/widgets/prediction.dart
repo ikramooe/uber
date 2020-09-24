@@ -16,9 +16,10 @@ class PredictionTile extends StatelessWidget {
   final Prediction prediction;
   PredictionTile({this.prediction});
   void getPlaceDetails(String placeID, context) async {
+    
     var pr = ProgressDialog(context,
         type: ProgressDialogType.Normal, isDismissible: false, showLogs: true);
-
+    
     pr.style(
         message: 'Searching...',
         borderRadius: 10.0,
@@ -32,11 +33,12 @@ class PredictionTile extends StatelessWidget {
             color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
         messageTextStyle: TextStyle(
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
-
+    
     await pr.show();
     String url =
         "https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeID&key=$mapkey";
     var response = await RequestHelper.getRequest(url);
+  
     pr.hide();
     if (response == "failed") return;
     if (response['status'] == "OK") {
@@ -51,7 +53,7 @@ class PredictionTile extends StatelessWidget {
       Provider.of<AppData>(context, listen: false)
           .updateDestinationAddress(thisPlace);
       //print("olaaa");
-      //var x = response['result'];
+      //print("meeee"+thisPlace.placeName);
 
       Navigator.pop(context,'getDirection');
     }

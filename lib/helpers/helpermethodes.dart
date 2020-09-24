@@ -40,25 +40,29 @@ class HelperMethods {
 
   static Future<DirectionDetails> getDirectionDetails(
       LatLng startPosition, LatLng endPosition) async {
+    print(startPosition.latitude);
+    print(endPosition.latitude);
     String url =
-        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPosition.latitude},${startPosition.longitude}&destination=${endPosition.latitude},${endPosition.longitude}&mode=driving&key={$mapkey}";
+        "https://maps.googleapis.com/maps/api/directions/json?origin=${startPosition.latitude},${startPosition.longitude}&destination=${endPosition.latitude},${endPosition.longitude}&mode=driving&key=${mapkey}";
     var response = await RequestHelper.getRequest(url);
-    if (response == 'failed') {
-      return null;
-    }
-    DirectionDetails directionDetails = DirectionDetails();
+    //print(response['routes']['duration']['text']);
+    
+    DirectionDetails directionDetails = new DirectionDetails();
+   
     directionDetails.durationText =
-        response['routes'][0]['logs'][0]['duration']['text'];
+        response['routes'][0]['legs'][0]['duration']['text'];
     directionDetails.durationValue =
-        response['routes'][0]['logs'][0]['duration']['value'];
+        response['routes'][0]['legs'][0]['duration']['value'];
     directionDetails.distanceText =
-        response['routes'][0]['logs'][0]['distance']['text'];
+        response['routes'][0]['legs'][0]['distance']['text'];
 
     directionDetails.durationValue =
-        response['routes'][0]['logs'][0]['distance']['value'];
-
+        response['routes'][0]['legs'][0]['distance']['value'];
+   
     directionDetails.encodePoints =
         response['routes'][0]['overview_polyline']['points'];
+    
+    //print(directionDetails.distanceText);
     return directionDetails;
   }
 }
