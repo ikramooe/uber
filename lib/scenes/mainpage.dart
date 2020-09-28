@@ -14,6 +14,7 @@ import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
+import 'package:tProject/widgets/taxibutton.dart';
 
 class MainPage extends StatefulWidget {
   static const String id = "main";
@@ -21,13 +22,26 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   //Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
   Position currentPosition;
+  
+  var tripDirectionDetails=null ;
+
+  
+
+  void showDetailsSheet() async {
+    await getDirection();
+    setState(() {
+      searchSheetHeight = 0;
+      rideDetailsHeight = (Platform.isAndroid) ? 235 : 260;
+      mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
+    });
+  }
 
   void setupPoisitionLocator() async {
     //Position position = await getCurrentPosition()
-    print('hey ');
+
     currentPosition =
         await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     LatLng pos = LatLng(currentPosition.latitude, currentPosition.longitude);
@@ -35,14 +49,13 @@ class _MainPageState extends State<MainPage> {
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
         await HelperMethods.findCoordinatesAddress(currentPosition, context);
-    //print("meeeeeeeeeeeeeeeeeee");
-    //print(address);
   }
 
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
-
+  double rideDetailsHeight = 0;
+  
   double mapBottomPadding = 0;
   double searchSheetHeight = (Platform.isIOS) ? 300 : 0;
   List<LatLng> polylineCoordinates = [];
@@ -57,6 +70,7 @@ class _MainPageState extends State<MainPage> {
       zoom: 19.151926040649414);
 
   Widget build(BuildContext context) {
+    
     return Scaffold(
       key: scaffoldkey,
       drawer: Container(
@@ -169,77 +183,153 @@ class _MainPageState extends State<MainPage> {
             ),
           ),
 
-          // Search
+          // Search Sheet
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
-              height: 200,
-              decoration: BoxDecoration(
+            child: AnimatedSize(
+              vsync: this,
+              curve: Curves.easeIn,
+              duration: new Duration(milliseconds: 150),
+              child: Container(
+                height: 200,
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 15.0,
+                          spreadRadius: 0.5,
+                          offset: Offset(0.7, 0.7))
+                    ]),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Text(
+                        'Ziouane Vite Vite',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                      Text('votre Destination',
+                          style: TextStyle(
+                              fontSize: 18, fontFamily: 'Brand-Bold')),
+                      SizedBox(height: 20),
+                      //recherche
+                      GestureDetector(
+                        onTap: () async {
+                          var response = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => SearchPAGE()));
+                          if (response == 'getDirection') {
+                            showDetailsSheet();
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 5.0,
+                                    spreadRadius: 0.5,
+                                    offset: Offset(0.7, 0.7))
+                              ]),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Row(
+                              children: <Widget>[
+                                Icon(Icons.search, color: Colors.blueAccent),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Text('Destination'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          //Ride Price Details
+
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AnimatedSize(
+              vsync: this,
+              duration: new Duration(milliseconds: 150),
+              child: Container(
+                decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(15),
                       topRight: Radius.circular(15)),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 15.0,
-                        spreadRadius: 0.5,
-                        offset: Offset(0.7, 0.7))
-                  ]),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    SizedBox(
-                      height: 5,
+                      blurRadius: 15,
+                      color: Colors.black26,
+                      spreadRadius: 0.5,
+                      offset: Offset(0.7, 0.7),
                     ),
-                    Text('Ziouane Vite Vite', style: TextStyle(fontSize: 10)),
-                    Text('rerre',
-                        style:
-                            TextStyle(fontSize: 18, fontFamily: 'Brand-Bold')),
-                    SizedBox(height: 20),
-                    //recherche
-                    GestureDetector(
-                      onTap: () async {
-                        var response = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SearchPAGE()));
-                        if (response == 'getDirection') {
-                          print("je suis la ");
-                          await getDirection();
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 5.0,
-                                  spreadRadius: 0.5,
-                                  offset: Offset(0.7, 0.7))
-                            ]),
+                  ],
+                ),
+                height: rideDetailsHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 18.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        color: Colors.white,
                         child: Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Row(
-                            children: <Widget>[
-                              Icon(Icons.search, color: Colors.blueAccent),
+                            children: [
+                              Text('Total'),
                               SizedBox(
-                                width: 10,
+                                width: 16,
                               ),
-                              Text('Destination'),
+                              Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [Text((tripDirectionDetails!=null)?tripDirectionDetails.distanceText : ''), Text('km')]),
+                              Expanded(
+                                child: Container(),
+                              ),
+                              
+                              Text((tripDirectionDetails!=null) ? HelperMethods.estimateFares(tripDirectionDetails) : ''),
                             ],
                           ),
                         ),
                       ),
-                    )
-                  ],
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: TaxiButton(
+                          title: 'valider',
+                          color: BrandColors.colorGreen,
+                          onPressed: () {},
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -250,16 +340,15 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> getDirection() async {
-    print("hello world");
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination =
         Provider.of<AppData>(context, listen: false).destinationAddress;
     var pickLatLng = LatLng(pickup.latitude, pickup.longitude);
     var destinationLatLng = LatLng(destination.latitude, destination.longitude);
-    
+
     var pr = ProgressDialog(context,
         type: ProgressDialogType.Normal, isDismissible: false, showLogs: true);
-    
+
     pr.style(
         message: 'Searching...',
         borderRadius: 10.0,
@@ -274,15 +363,20 @@ class _MainPageState extends State<MainPage> {
         messageTextStyle: TextStyle(
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
 
-    await pr.show();
-    
+    //await pr.show();
+
     DirectionDetails thisDetails =
-        await HelperMethods.getDirectionDetails(pickLatLng,destinationLatLng);
+        await HelperMethods.getDirectionDetails(pickLatLng, destinationLatLng);
+        setState(() {
+          tripDirectionDetails = thisDetails;
+
+        });
+          
 
     //print('detaaaiiilllsss');
     //print(thisDetails);
 
-    pr.hide();
+    //pr.hide();
     PolylinePoints polylinePoints = PolylinePoints();
     List<PointLatLng> results =
         polylinePoints.decodePolyline(thisDetails.encodePoints);

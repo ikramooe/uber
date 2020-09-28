@@ -40,15 +40,13 @@ class HelperMethods {
 
   static Future<DirectionDetails> getDirectionDetails(
       LatLng startPosition, LatLng endPosition) async {
-    print(startPosition.latitude);
-    print(endPosition.latitude);
     String url =
         "https://maps.googleapis.com/maps/api/directions/json?origin=${startPosition.latitude},${startPosition.longitude}&destination=${endPosition.latitude},${endPosition.longitude}&mode=driving&key=${mapkey}";
     var response = await RequestHelper.getRequest(url);
     //print(response['routes']['duration']['text']);
-    
+
     DirectionDetails directionDetails = new DirectionDetails();
-   
+
     directionDetails.durationText =
         response['routes'][0]['legs'][0]['duration']['text'];
     directionDetails.durationValue =
@@ -56,13 +54,26 @@ class HelperMethods {
     directionDetails.distanceText =
         response['routes'][0]['legs'][0]['distance']['text'];
 
-    directionDetails.durationValue =
+    directionDetails.distanceValue =
         response['routes'][0]['legs'][0]['distance']['value'];
-   
+
     directionDetails.encodePoints =
         response['routes'][0]['overview_polyline']['points'];
-    
-    //print(directionDetails.distanceText);
+
     return directionDetails;
+  
+  }
+
+  static String estimateFares(DirectionDetails details) {
+    // per kilo 50 dzd
+    //per minute
+    //convertir en km
+    
+    print(details.distanceText);
+    print(details.distanceValue);
+    double distanceFare = (details.distanceValue / 1000 ) * 50;
+    //duree en minutes
+    double timeFare = (details.distanceValue / 60);
+    return  distanceFare.toString();
   }
 }

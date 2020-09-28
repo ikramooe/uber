@@ -34,12 +34,12 @@ class PredictionTile extends StatelessWidget {
         messageTextStyle: TextStyle(
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600));
     
-    await pr.show();
+    //await pr.show();
     String url =
         "https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeID&key=$mapkey";
     var response = await RequestHelper.getRequest(url);
   
-    pr.hide();
+    //pr.hide();
     if (response == "failed") return;
     if (response['status'] == "OK") {
       //print(response['result']['name']);

@@ -72,7 +72,7 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
 
   void onPhoneNumberChange(
       String number, String internationalizedPhoneNumber, String isoCode) {
-    print(number);
+    
     setState(() {
       phoneNumber = number;
     });
@@ -86,7 +86,7 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return new AlertDialog(
-            title: Text('Enter your OTP'),
+            title: Text('votre code '),
             content: Padding(
               padding: const EdgeInsets.all(8.0),
               // pin input
@@ -110,45 +110,54 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
 
 //end dialog box
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Column(
-              children: <Widget>[
-                SizedBox(height: 60),
-                Image(
-                  alignment: Alignment.center,
-                  height: 100,
-                  width: 100,
-                  image: AssetImage("images/logo.png"),
-                ),
-                SizedBox(
-                  height: 30,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(children: <Widget>[
-                    InternationalPhoneInput(
-                      onPhoneNumberChange: onPhoneNumberChange,
-                      initialSelection: phoneIsoCode,
-                      enabledCountries: ['+213', '+1'],
-                      labelText: "Phone Number",
-                      showCountryCodes: true,
-                      showCountryFlags: true,
-                    ),
-                    SizedBox(height: 35),
-                  ]),
-                ),
-                TaxiButton(
-                    title: 'Verifier',
-                    color: BrandColors.colorGreen,
-                    onPressed: () {
-                      _submit();
-                    })
-              ],
+    return Container(
+      decoration:new BoxDecoration(
+            image:  new DecorationImage(
+              image: new AssetImage("images/background.jpg"),
+              fit: BoxFit.cover,)),
+
+      child: Scaffold(
+        backgroundColor:Colors.transparent,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Column(
+                children: <Widget>[
+                  SizedBox(height: 60),
+                  Image(
+                    alignment: Alignment.center,
+                    height: 200,
+                    width: 200,
+                    image: AssetImage("images/logo.png"),
+                  ),
+                  SizedBox(
+                    height: 30,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(children: <Widget>[
+                      InternationalPhoneInput(
+                        onPhoneNumberChange: onPhoneNumberChange,
+                        initialSelection: phoneIsoCode,
+                        enabledCountries: ['+213'],
+                        labelText: "Telephone",
+                        showCountryCodes: true,
+                        decoration: InputDecoration(fillColor: Colors.white),
+                        
+                        showCountryFlags: true,
+                      ),
+                      SizedBox(height: 35),
+                    ]),
+                  ),
+                  TaxiButton(
+                      title: 'Verifier',
+                      color: BrandColors.colorGreen,
+                      onPressed: () {
+                        _submit();
+                      })
+                ],
+              ),
             ),
           ),
         ),
@@ -193,7 +202,7 @@ class Pin extends StatelessWidget {
             enableActiveFill: true,
             keyboardType: TextInputType.number,
             onCompleted: (v) {
-              print("Completed");
+              
             },
             onChanged: (value) {
               print(value);
