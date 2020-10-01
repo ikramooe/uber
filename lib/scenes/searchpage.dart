@@ -112,7 +112,7 @@ class _SearchPAGEState extends State<SearchPAGE> {
                               hintText: address,
                               fillColor: BrandColors.colorLightGrayFair,
                               filled: true,
-                              border: InputBorder.none,
+                            border: InputBorder.none,
                               isDense: true,
                               contentPadding:
                                   EdgeInsets.only(left: 10, top: 8, bottom: 8)),

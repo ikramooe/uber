@@ -32,6 +32,8 @@ class HelperMethods {
               ikram.id = snapshot.key,
               ikram.phone = snapshot.value['phone'],
               currentUserInfo  = ikram,
+              print(currentUserInfo.id),
+              print(currentUserInfo.phone),
               
               
             }

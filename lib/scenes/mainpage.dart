@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -31,6 +32,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool drawerCanOpen = true;
 
   var tripDirectionDetails = null;
+
+  DatabaseReference rideRef;
 
   void showDetailsSheet() async {
     await getDirection();
@@ -414,13 +417,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 10,
                       ),
-                      Container(
-                        width: double.infinity,
-                        child: Text(
-                          'Annuler',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12),
-                        ),
+                      TaxiButton(
+                        title: 'Annuler',
+                        color:Colors.greenAccent,
+                        onPressed: ()=>{},
+
                       )
                     ],
                   ),
@@ -440,7 +441,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _markers.clear();
       _circles.clear();
       rideDetailsHeight = 0;
-      searchSheetHeight = (Platform.isAndroid) ? 195 :  200;
+      searchSheetHeight = (Platform.isAndroid) ? 195 : 200;
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
       drawerCanOpen = true;
       setupPoisitionLocator();
@@ -571,5 +572,35 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     HelperMethods.getCurrent();
+  }
+
+  void createRideRequest() {
+    rideRef =
+        FirebaseDatabase.instance.reference().child('riderRequest').push();
+    var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
+    var destination =
+        Provider.of<AppData>(context, listen: false).destinationAddress;
+
+    Map pickupMap = {
+      'latitude': pickup.latitude.toString(),
+      'longitude': pickup.longitude.toString(),
+      'place': pickup.placeName
+    };
+
+    Map destinationMap = {
+      'latitude': destination.latitude.toString(),
+      'longitude': destination.longitude.toString(),
+      'place': destination.placeName
+    };
+
+    Map rideMap = {
+      'created_at': DateTime.now().toString(),
+      'rider_phone': currentUserInfo.phone,
+      'rider_id': currentUserInfo.id,
+      'pickup': pickupMap,
+      'destination': destinationMap,
+      'driver_id': 'waiting'
+    };
+    rideRef.set(rideMap);
   }
 }
