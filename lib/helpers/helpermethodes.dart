@@ -1,8 +1,12 @@
 import 'package:connectivity/connectivity.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+// ignore: duplicate_import
+import 'package:firebase_database/firebase_database.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/datamodels/address.dart';
 import 'package:tProject/datamodels/datadetails.dart';
+import 'package:tProject/datamodels/user.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/globals.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +14,30 @@ import 'package:geolocator/geolocator.dart';
 import 'requesthelper.dart';
 
 class HelperMethods {
+  static set currentUserInfo(currentUserInfo) {}
+
+  static void getCurrent() async {
+    currentFirebaseUser = FirebaseAuth.instance.currentUser;
+    Userx ikram = new Userx();
+    String userid = currentFirebaseUser.uid;
+
+    DatabaseReference userRef =
+        FirebaseDatabase.instance.reference().child('users/$userid');
+    userRef.once().then((DataSnapshot snapshot) => {
+          if (snapshot.value != null)
+            {
+              
+              
+
+              ikram.id = snapshot.key,
+              ikram.phone = snapshot.value['phone'],
+              currentUserInfo  = ikram,
+              
+              
+            }
+        });
+  }
+
   static Future<String> findCoordinatesAddress(
       Position position, context) async {
     String placeAddress = "";
@@ -61,19 +89,19 @@ class HelperMethods {
         response['routes'][0]['overview_polyline']['points'];
 
     return directionDetails;
-  
   }
 
   static String estimateFares(DirectionDetails details) {
     // per kilo 50 dzd
     //per minute
     //convertir en km
-    
+
     print(details.distanceText);
     print(details.distanceValue);
-    double distanceFare = (details.distanceValue / 1000 ) * 50;
+    double distanceFare = (details.distanceValue / 1000) * 50;
     //duree en minutes
+    // ignore: unused_local_variable
     double timeFare = (details.distanceValue / 60);
-    return  distanceFare.toString();
+    return distanceFare.toString();
   }
 }

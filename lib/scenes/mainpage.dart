@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,6 +17,8 @@ import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
 import 'package:tProject/widgets/taxibutton.dart';
 
+import '../globals.dart';
+
 class MainPage extends StatefulWidget {
   static const String id = "main";
   @override
@@ -25,17 +28,25 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   //Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
   Position currentPosition;
-  
-  var tripDirectionDetails=null ;
+  bool drawerCanOpen = true;
 
-  
+  var tripDirectionDetails = null;
 
   void showDetailsSheet() async {
     await getDirection();
     setState(() {
       searchSheetHeight = 0;
-      rideDetailsHeight = (Platform.isAndroid) ? 235 : 260;
+      rideDetailsHeight = (Platform.isAndroid) ? 200 : 260;
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
+      drawerCanOpen = false;
+    });
+  }
+
+  void showRequestingSheet() {
+    setState(() {
+      rideDetailsHeight = 0;
+      requestingSheetHeight = (Platform.isAndroid) ? 195 : 220;
+      drawerCanOpen = false;
     });
   }
 
@@ -55,22 +66,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
   double rideDetailsHeight = 0;
-  
+
   double mapBottomPadding = 0;
-  double searchSheetHeight = (Platform.isIOS) ? 300 : 0;
+  double searchSheetHeight = (Platform.isIOS) ? 300 : 195;
+  double requestingSheetHeight = 0; //195 220
   List<LatLng> polylineCoordinates = [];
   Set<Polyline> _polylines = {};
   Set<Marker> _markers = {};
   Set<Circle> _circles = {};
 
-  static final CameraPosition _kLake = CameraPosition(
-      bearing: 192.8334901395799,
-      target: LatLng(37.43296265331129, -122.08832357078792),
-      tilt: 59.440717697143555,
-      zoom: 19.151926040649414);
-
   Widget build(BuildContext context) {
-    
     return Scaffold(
       key: scaffoldkey,
       drawer: Container(
@@ -138,7 +143,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             polylines: _polylines,
             markers: _markers,
             circles: _circles,
-            initialCameraPosition: _kLake,
+            initialCameraPosition: kLake,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
               mapController = controller;
@@ -157,7 +162,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             left: 20,
             child: GestureDetector(
               onTap: () {
-                scaffoldkey.currentState.openDrawer();
+                if (drawerCanOpen == true)
+                  scaffoldkey.currentState.openDrawer();
+                else
+                  resetApp();
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -175,7 +183,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   backgroundColor: Colors.white,
                   radius: 20,
                   child: Icon(
-                    Icons.menu,
+                    (drawerCanOpen) ? Icons.menu : Icons.arrow_back,
                     color: Colors.black38,
                   ),
                 ),
@@ -193,7 +201,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               curve: Curves.easeIn,
               duration: new Duration(milliseconds: 150),
               child: Container(
-                height: 200,
+                height: searchSheetHeight,
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
@@ -266,7 +274,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
           ),
           //Ride Price Details
-
+          // searching  car request
           Positioned(
             left: 0,
             right: 0,
@@ -274,6 +282,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             child: AnimatedSize(
               vsync: this,
               duration: new Duration(milliseconds: 150),
+              curve: Curves.easeIn,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -307,12 +316,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               ),
                               Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [Text((tripDirectionDetails!=null)?tripDirectionDetails.distanceText : ''), Text('km')]),
+                                  children: [
+                                    Text((tripDirectionDetails != null)
+                                        ? tripDirectionDetails.distanceText
+                                        : ''),
+                                    Text('km')
+                                  ]),
                               Expanded(
                                 child: Container(),
                               ),
-                              
-                              Text((tripDirectionDetails!=null) ? HelperMethods.estimateFares(tripDirectionDetails) : ''),
+                              Text((tripDirectionDetails != null)
+                                  ? HelperMethods.estimateFares(
+                                      tripDirectionDetails)
+                                  : ''),
                             ],
                           ),
                         ),
@@ -325,7 +341,85 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         child: TaxiButton(
                           title: 'valider',
                           color: BrandColors.colorGreen,
-                          onPressed: () {},
+                          onPressed: () {
+                            showRequestingSheet();
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // searhing car request
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AnimatedSize(
+              vsync: this,
+              duration: new Duration(microseconds: 150),
+              curve: Curves.easeIn,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 15.0,
+                        spreadRadius: 0.5,
+                        offset: Offset(0.7, 0.7),
+                      )
+                    ]),
+                height: requestingSheetHeight,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      SizedBox(
+                        height: 10,
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextLiquidFill(
+                          text: "Recherche...",
+                          waveColor: BrandColors.colorTextSemiLight,
+                          boxBackgroundColor: Colors.white,
+                          textStyle: TextStyle(
+                              color: BrandColors.colorTextSemiLight,
+                              fontSize: 22.0,
+                              fontFamily: 'Brand-Bold'),
+                          boxHeight: 40,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                              width: 1.0,
+                              color: BrandColors.colorLightGrayFair),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Container(
+                        width: double.infinity,
+                        child: Text(
+                          'Annuler',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12),
                         ),
                       )
                     ],
@@ -337,6 +431,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  resetApp() {
+    setState(() {
+      polylineCoordinates.clear();
+      _polylines.clear();
+      _markers.clear();
+      _circles.clear();
+      rideDetailsHeight = 0;
+      searchSheetHeight = (Platform.isAndroid) ? 195 :  200;
+      mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
+      drawerCanOpen = true;
+      setupPoisitionLocator();
+    });
   }
 
   Future<void> getDirection() async {
@@ -367,13 +475,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     DirectionDetails thisDetails =
         await HelperMethods.getDirectionDetails(pickLatLng, destinationLatLng);
-        setState(() {
-          tripDirectionDetails = thisDetails;
+    setState(() {
+      tripDirectionDetails = thisDetails;
+    });
 
-        });
-          
-
-    //print('detaaaiiilllsss');
+    print('detaaaiiilllsss');
     //print(thisDetails);
 
     //pr.hide();
@@ -459,5 +565,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         _circles.add(destinationCircle);
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    HelperMethods.getCurrent();
   }
 }

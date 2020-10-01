@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:international_phone_input/international_phone_input.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
@@ -39,7 +40,6 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
         if (e.code == 'invalid-phone-number') {
           print('The provided phone number is not valid.');
         }
-        
       },
       // sms sent
       codeSent: (String verificationId, int resendToken) {
@@ -64,6 +64,15 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
       if (user == null) {
         print('User is currently signed out!');
       } else {
+        //save user information to database
+        DatabaseReference newUserRef =
+            FirebaseDatabase.instance.reference().child('users/${user.uid}');
+        // the data to be saved user phone number
+        Map userMap = {
+          'phone': phoneNumber,
+        };
+        newUserRef.set(userMap);
+        // go to main page 
         Navigator.pushNamedAndRemoveUntil(
             context, MainPage.id, (route) => false);
       }
@@ -72,7 +81,6 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
 
   void onPhoneNumberChange(
       String number, String internationalizedPhoneNumber, String isoCode) {
-    
     setState(() {
       phoneNumber = number;
     });
@@ -111,13 +119,13 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
 //end dialog box
   Widget build(BuildContext context) {
     return Container(
-      decoration:new BoxDecoration(
-            image:  new DecorationImage(
-              image: new AssetImage("images/background.jpg"),
-              fit: BoxFit.cover,)),
-
+      decoration: new BoxDecoration(
+          image: new DecorationImage(
+        image: new AssetImage("images/background.jpg"),
+        fit: BoxFit.cover,
+      )),
       child: Scaffold(
-        backgroundColor:Colors.transparent,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -144,7 +152,6 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
                         labelText: "Telephone",
                         showCountryCodes: true,
                         decoration: InputDecoration(fillColor: Colors.white),
-                        
                         showCountryFlags: true,
                       ),
                       SizedBox(height: 35),
@@ -201,9 +208,7 @@ class Pin extends StatelessWidget {
             backgroundColor: Colors.white,
             enableActiveFill: true,
             keyboardType: TextInputType.number,
-            onCompleted: (v) {
-              
-            },
+            onCompleted: (v) {},
             onChanged: (value) {
               print(value);
               code = value;

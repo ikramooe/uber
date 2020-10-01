@@ -43,6 +43,8 @@ dependencies:
   provider: ^4.3.2+2
   progress_dialog: ^1.2.4
   flutter_polyline_points: ^0.2.3
+  animated_text_kit: ^2.2.0
+
 
 dev_dependencies:
   flutter_test:
