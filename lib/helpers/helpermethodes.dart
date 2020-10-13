@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // ignore: duplicate_import
@@ -26,18 +28,20 @@ class HelperMethods {
     userRef.once().then((DataSnapshot snapshot) => {
           if (snapshot.value != null)
             {
-              
-              
-
               ikram.id = snapshot.key,
               ikram.phone = snapshot.value['phone'],
-              currentUserInfo  = ikram,
-              print(currentUserInfo.id),
-              print(currentUserInfo.phone),
-              
-              
+              currentUserInfo = ikram,
+              //print(currentUserInfo.id),
+              //print(currentUserInfo.phone),
             }
         });
+  }
+
+  static double generateRandomNumber(int max) {
+    var randomGenerator = Random();
+    int randInt = randomGenerator.nextInt(max);
+
+    return randInt.toDouble();
   }
 
   static Future<String> findCoordinatesAddress(
@@ -53,10 +57,8 @@ class HelperMethods {
         "https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$mapkey";
 
     var response = await RequestHelper.getRequest(url);
-    //print(response);
     if (response != 'failed') {
       placeAddress = response['results'][0]['formatted_address'];
-      //print(placeAddress);
       Address pickupAddress = new Address();
       pickupAddress.longitude = position.longitude;
       pickupAddress.latitude = position.latitude;
@@ -94,12 +96,8 @@ class HelperMethods {
   }
 
   static String estimateFares(DirectionDetails details) {
-    // per kilo 50 dzd
-    //per minute
-    //convertir en km
-
-    print(details.distanceText);
-    print(details.distanceValue);
+    //print(details.distanceText);
+    //print(details.distanceValue);
     double distanceFare = (details.distanceValue / 1000) * 50;
     //duree en minutes
     // ignore: unused_local_variable

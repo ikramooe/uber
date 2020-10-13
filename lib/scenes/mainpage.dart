@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -12,7 +13,9 @@ import 'package:progress_dialog/progress_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/brand-colors.dart';
 import 'package:tProject/datamodels/datadetails.dart';
+import 'package:tProject/datamodels/nearbydriver.dart';
 import 'package:tProject/dataproviders/appdata.dart';
+import 'package:tProject/helpers/firehelper.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
@@ -27,13 +30,88 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
-  //Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
   Position currentPosition;
   bool drawerCanOpen = true;
 
   var tripDirectionDetails = null;
 
   DatabaseReference rideRef;
+  BitmapDescriptor nearbyIcon;
+
+  bool nearbyDriversKeysLoaded;
+
+  void updateDriversOnMap() {
+    setState(() {
+      _markers.clear();
+    });
+    Set<Marker> tempMarkers = Set<Marker>();
+    for (NearByDriver driver in FireHelper.nearbyDriverList) {
+      LatLng driverPosition = LatLng(driver.latitude, driver.longitude);
+      Marker thisMarker = Marker(
+          markerId: MarkerId('driver${driver.key}'),
+          position: driverPosition,
+          icon:nearbyIcon,
+              
+          rotation: HelperMethods.generateRandomNumber(368));
+      tempMarkers.add(thisMarker);
+    }
+    setState(() {
+      _markers = tempMarkers;
+    });
+  }
+
+  void startGeoFireListener() {
+    Geofire.initialize('driversAvailible');
+    // 5 kilometers
+    Geofire.queryAtLocation(
+            currentPosition.latitude, currentPosition.longitude, 5)
+        .listen((map) {
+      print(map);
+      if (map != null) {
+        var callBack = map['callBack'];
+
+        //latitude will be retrieved from map['latitude']
+        //longitude will be retrieved from map['longitude']
+
+        switch (callBack) {
+          case Geofire.onKeyEntered:
+            NearByDriver nearbyDriver = NearByDriver();
+            nearbyDriver.key = map['key'];
+            nearbyDriver.latitude = map['latitude'];
+            nearbyDriver.longitude = map['longitude'];
+            FireHelper.nearbyDriverList.add(nearbyDriver);
+
+            if (nearbyDriversKeysLoaded) {
+              updateDriversOnMap();
+            }
+            break;
+
+          case Geofire.onKeyExited:
+            FireHelper.removeFromList(map['key']);
+            updateDriversOnMap();
+            break;
+
+          case Geofire.onKeyMoved:
+            // Update your key's location
+            NearByDriver nearByDriver = NearByDriver();
+            nearByDriver.key = map['key'];
+            nearByDriver.latitude = map['latitude'];
+            nearByDriver.longitude = map['longitude'];
+            FireHelper.updateNearbyLocation(nearByDriver);
+            updateDriversOnMap();
+            break;
+
+          case Geofire.onGeoQueryReady:
+            // All Intial Data is loaded
+            nearbyDriversKeysLoaded = true;
+            updateDriversOnMap();
+            break;
+        }
+      }
+
+      setState(() {});
+    });
+  }
 
   void showDetailsSheet() async {
     await getDirection();
@@ -53,16 +131,30 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
+  void createMarker() {
+    if (nearbyIcon == null) {
+      ImageConfiguration imageConfiguration =
+          createLocalImageConfiguration(context, size: Size(2, 2));
+      BitmapDescriptor.fromAssetImage(
+              imageConfiguration,
+              (Platform.isIOS)
+                  ? 'images/car_ios.png'
+                  : 'images/car_android.png')
+          .then((icon) => nearbyIcon = icon);
+    }
+  }
+
   void setupPoisitionLocator() async {
     //Position position = await getCurrentPosition()
 
     currentPosition =
         await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     LatLng pos = LatLng(currentPosition.latitude, currentPosition.longitude);
-    CameraPosition cp = new CameraPosition(target: pos, zoom: 14);
+    CameraPosition cp = new CameraPosition(target: pos, zoom: 5);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
         await HelperMethods.findCoordinatesAddress(currentPosition, context);
+    startGeoFireListener();
   }
 
   GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
@@ -72,13 +164,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   double mapBottomPadding = 0;
   double searchSheetHeight = (Platform.isIOS) ? 300 : 195;
-  double requestingSheetHeight = 0; //195 220
+  double requestingSheetHeight = 0;
   List<LatLng> polylineCoordinates = [];
   Set<Polyline> _polylines = {};
   Set<Marker> _markers = {};
   Set<Circle> _circles = {};
 
   Widget build(BuildContext context) {
+    createMarker();
     return Scaffold(
       key: scaffoldkey,
       drawer: Container(
@@ -419,9 +512,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       ),
                       TaxiButton(
                         title: 'Annuler',
-                        color:Colors.greenAccent,
-                        onPressed: ()=>{},
-
+                        color: Colors.greenAccent,
+                        onPressed: () => {},
                       )
                     ],
                   ),

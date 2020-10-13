@@ -13,7 +13,8 @@ class RegisterPage extends StatelessWidget {
   var EmailController = TextEditingController();
   var PhoneController = TextEditingController();
   var PasswordController = TextEditingController();
-
+  
+  
   void RegisterUser() async {
       try {
             UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(

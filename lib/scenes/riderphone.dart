@@ -1,3 +1,4 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -19,15 +20,13 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
   String smsCode;
   String verificationCode;
   String otp = "";
+  
   var PhoneController = TextEditingController();
-
   String currentText;
-
   var formKey;
-
   String status;
-
   var phoneIsoCode;
+
   Future<void> _submit() async {
     var verifyPhoneNumber = await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: "+213796580458",

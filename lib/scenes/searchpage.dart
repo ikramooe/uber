@@ -55,8 +55,6 @@ class _SearchPAGEState extends State<SearchPAGE> {
     String address =
         Provider.of<AppData>(context).pickupAddress.placeName ?? '';
     pickupController.text = address;
-    //print('we ain\'t never getting older');
-    //print(address);
     return Scaffold(
         body: SingleChildScrollView(
       child: Column(children: <Widget>[
