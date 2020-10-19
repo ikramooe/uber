@@ -50,8 +50,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       Marker thisMarker = Marker(
           markerId: MarkerId('driver${driver.key}'),
           position: driverPosition,
-          icon:nearbyIcon,
-              
+          icon: nearbyIcon,
           rotation: HelperMethods.generateRandomNumber(368));
       tempMarkers.add(thisMarker);
     }
@@ -174,6 +173,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     createMarker();
     return Scaffold(
       key: scaffoldkey,
+      resizeToAvoidBottomInset: false,
       drawer: Container(
         width: 250,
         color: Colors.white,
@@ -480,21 +480,22 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(
                         height: 10,
                       ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextLiquidFill(
-                          text: "Recherche...",
-                          waveColor: BrandColors.colorTextSemiLight,
-                          boxBackgroundColor: Colors.white,
-                          textStyle: TextStyle(
-                              color: BrandColors.colorTextSemiLight,
-                              fontSize: 22.0,
-                              fontFamily: 'Brand-Bold'),
-                          boxHeight: 40,
+                      SafeArea(
+                        child: Container(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: TextLiquidFill(
+                              text: "Recherche...",
+                              waveColor: BrandColors.colorTextSemiLight,
+                              boxBackgroundColor: Colors.white,
+                              textStyle: TextStyle(
+                                  color: BrandColors.colorTextSemiLight,
+                                  fontSize: 22.0,
+                                  fontFamily: 'Brand-Bold'),
+                              boxHeight: 40,
+                            ),
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 20,
                       ),
                       Container(
                         height: 50,
@@ -506,9 +507,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               width: 1.0,
                               color: BrandColors.colorLightGrayFair),
                         ),
-                      ),
-                      SizedBox(
-                        height: 10,
                       ),
                       TaxiButton(
                         title: 'Annuler',
@@ -536,6 +534,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       searchSheetHeight = (Platform.isAndroid) ? 195 : 200;
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
       drawerCanOpen = true;
+      requestingSheetHeight = 0;
       setupPoisitionLocator();
     });
   }
