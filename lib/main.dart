@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/scenes/riderregister.dart';
 
 import 'dataproviders/appdata.dart';
+import 'globals.dart';
 
 
 Future<void> main() async {
@@ -32,6 +34,7 @@ Future<void> main() async {
             databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
   );
+  currentFirebaseUser = await FirebaseAuth.instance.currentUser;
   runApp(MyApp());
 }
 
@@ -46,7 +49,7 @@ class MyApp extends StatelessWidget{
         theme: ThemeData(
           fontFamily: 'Brand-Regular'
         ),
-       initialRoute:PhoneRegisterPage.id,
+       initialRoute: currentFirebaseUser == null ? PhoneRegisterPage.id : MainPage.id,
        routes: {
          RegisterPage.id : (context)=>RegisterPage(),
          LoginPage.id:(context)=>LoginPage(),

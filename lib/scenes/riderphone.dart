@@ -1,4 +1,4 @@
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
   String smsCode;
   String verificationCode;
   String otp = "";
-  
+
   var PhoneController = TextEditingController();
   String currentText;
   var formKey;
@@ -71,11 +71,18 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
           'phone': phoneNumber,
         };
         newUserRef.set(userMap);
-        // go to main page 
+        // go to main page
         Navigator.pushNamedAndRemoveUntil(
             context, MainPage.id, (route) => false);
       }
     });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    
   }
 
   void onPhoneNumberChange(

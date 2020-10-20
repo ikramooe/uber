@@ -1,9 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // ignore: duplicate_import
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/datamodels/address.dart';
@@ -12,6 +15,8 @@ import 'package:tProject/datamodels/user.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/globals.dart';
 import 'package:geolocator/geolocator.dart';
+
+import 'package:http/http.dart' as http;
 
 import 'requesthelper.dart';
 
@@ -31,8 +36,6 @@ class HelperMethods {
               ikram.id = snapshot.key,
               ikram.phone = snapshot.value['phone'],
               currentUserInfo = ikram,
-              //print(currentUserInfo.id),
-              //print(currentUserInfo.phone),
             }
         });
   }
@@ -44,10 +47,56 @@ class HelperMethods {
     return randInt.toDouble();
   }
 
+  static Future<Map<String, dynamic>> sendAndRetrieveMessage(
+      userid, rideid) async {
+    print('iam userid $userid');
+    await firebaseMessaging.requestNotificationPermissions(
+      const IosNotificationSettings(
+          sound: true, badge: true, alert: true, provisional: false),
+    );
+
+    await http.post(
+      'https://fcm.googleapis.com/fcm/send',
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'key=${serverToken}',
+      },
+      body: jsonEncode(
+        <String, dynamic>{
+          'notification': <String, dynamic>{
+            'body': 'this is a body',
+            'title': 'this is a title'
+          },
+          'priority': 'high',
+          'data': <String, dynamic>{
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'id': '1',
+            'status': 'done',
+            'ride_id': rideid,
+          },
+          'to': userid,
+        },
+      ),
+    );
+
+    final Completer<Map<String, dynamic>> completer =
+        Completer<Map<String, dynamic>>();
+
+    firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        completer.complete(message);
+      },
+    );
+
+    return completer.future;
+  }
+
   static Future<String> findCoordinatesAddress(
       Position position, context) async {
     String placeAddress = "";
-
+    print('finding coords ');
+    print(position.latitude);
+    print(position.longitude);
     var connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult != ConnectivityResult.mobile &&
         connectivityResult != ConnectivityResult.wifi) {
@@ -57,6 +106,7 @@ class HelperMethods {
         "https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$mapkey";
 
     var response = await RequestHelper.getRequest(url);
+    print(response);
     if (response != 'failed') {
       placeAddress = response['results'][0]['formatted_address'];
       Address pickupAddress = new Address();
@@ -72,11 +122,13 @@ class HelperMethods {
 
   static Future<DirectionDetails> getDirectionDetails(
       LatLng startPosition, LatLng endPosition) async {
+    print(startPosition);
+    print(endPosition);
     String url =
         "https://maps.googleapis.com/maps/api/directions/json?origin=${startPosition.latitude},${startPosition.longitude}&destination=${endPosition.latitude},${endPosition.longitude}&mode=driving&key=${mapkey}";
     var response = await RequestHelper.getRequest(url);
-    //print(response['routes']['duration']['text']);
-
+    print(response['routes']);
+    print("res $response");
     DirectionDetails directionDetails = new DirectionDetails();
 
     directionDetails.durationText =

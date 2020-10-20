@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
@@ -34,12 +35,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool drawerCanOpen = true;
 
   var tripDirectionDetails = null;
+  var CodePromoController = TextEditingController();
 
   DatabaseReference rideRef;
   BitmapDescriptor nearbyIcon;
 
   bool nearbyDriversKeysLoaded;
-
+  bool foundDriver = false;
   void updateDriversOnMap() {
     setState(() {
       _markers.clear();
@@ -59,19 +61,84 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
+  void startTimer() {
+    Timer _timer;
+    int _start = 10;
+    const oneSec = const Duration(seconds: 1);
+    _timer = new Timer.periodic(
+      oneSec,
+      (Timer timer) => setState(
+        () {
+          if (_start < 1) {
+            timer.cancel();
+          } else {
+            _start = _start - 1;
+          }
+        },
+      ),
+    );
+  }
+
+  void SendToNearbyDrivers() {
+    print('sending to  drivers');
+    print(FireHelper.nearbyDriverList);
+    DatabaseReference DriverRef;
+    for (NearByDriver driver in FireHelper.nearbyDriverList) {
+      DatabaseReference token = FirebaseDatabase.instance
+          .reference()
+          .child('drivers/${driver.key}')
+          .child('token');
+      print('i am the token $token');
+
+      FirebaseDatabase.instance
+          .reference()
+          .child('drivers/${driver.key}/newtrip')
+          .set(rideRef.key);
+
+      HelperMethods.sendAndRetrieveMessage(driver.key, rideRef.key);
+      startTimer();
+      var driver_id = FirebaseDatabase.instance
+          .reference()
+          .child('riderRequest/${rideRef.key}')
+          .child('driver_id');
+      if (driver_id != "")
+        setState(() {
+          foundDriver = true;
+        });
+    }
+  }
+
+  int checkCodePromo() {
+    // ignore: deprecated_member_use
+    print('checking code promo ');
+    if (CodePromoController.value != "")
+      FirebaseFirestore.instance
+          .collection('CodesPromo')
+          .where('code', isEqualTo: 'Iam')
+          .get()
+          .then((QuerySnapshot value) {
+        print(value.docs);
+        if (value.docs.isEmpty == true) {
+          print('ededed');
+          return 0;
+        } else {
+          print('iam here ${value.docs[0].data()["promo"]}');
+          return value.docs[0].data()["promo"];
+        }
+      });
+    // rest of your code
+  }
+
   void startGeoFireListener() {
-    Geofire.initialize('driversAvailible');
+    Geofire.initialize('driversAvailable');
     // 5 kilometers
     Geofire.queryAtLocation(
-            currentPosition.latitude, currentPosition.longitude, 5)
+            currentPosition.latitude, currentPosition.longitude, 100)
         .listen((map) {
-      print(map);
+      //print('iam heereee');
+      //print(map);
       if (map != null) {
         var callBack = map['callBack'];
-
-        //latitude will be retrieved from map['latitude']
-        //longitude will be retrieved from map['longitude']
-
         switch (callBack) {
           case Geofire.onKeyEntered:
             NearByDriver nearbyDriver = NearByDriver();
@@ -128,6 +195,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       requestingSheetHeight = (Platform.isAndroid) ? 195 : 220;
       drawerCanOpen = false;
     });
+
+    createRideRequest();
   }
 
   void createMarker() {
@@ -144,10 +213,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void setupPoisitionLocator() async {
-    //Position position = await getCurrentPosition()
-
-    currentPosition =
-        await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    print('iam  hereeee ezfzefezfezfzef');
+    print('mee');
+    Position currentposition = await GeolocatorPlatform.instance
+        .getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.bestForNavigation);
+    print('hey there');
+    currentPosition = currentposition;
+    print('zzaeazeaezezaeaze $currentPosition');
     LatLng pos = LatLng(currentPosition.latitude, currentPosition.longitude);
     CameraPosition cp = new CameraPosition(target: pos, zoom: 5);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
@@ -395,54 +468,92 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   ],
                 ),
                 height: rideDetailsHeight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 18.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              Text('Total'),
-                              SizedBox(
-                                width: 16,
-                              ),
-                              Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text((tripDirectionDetails != null)
-                                        ? tripDirectionDetails.distanceText
-                                        : ''),
-                                    Text('km')
-                                  ]),
-                              Expanded(
-                                child: Container(),
-                              ),
-                              Text((tripDirectionDetails != null)
-                                  ? HelperMethods.estimateFares(
-                                      tripDirectionDetails)
-                                  : ''),
-                            ],
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 18.0),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          color: Colors.white,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Row(
+                              children: [
+                                Text('Total'),
+                                SizedBox(
+                                  width: 16,
+                                ),
+                                Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text((tripDirectionDetails != null)
+                                          ? tripDirectionDetails.distanceText
+                                          : ''),
+                                      Text('km')
+                                    ]),
+                                Expanded(
+                                  child: Container(),
+                                ),
+                                Text((tripDirectionDetails != null)
+                                    ? HelperMethods.estimateFares(
+                                        tripDirectionDetails)
+                                    : ''),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: TaxiButton(
-                          title: 'valider',
-                          color: BrandColors.colorGreen,
-                          onPressed: () {
-                            showRequestingSheet();
-                          },
+                        SizedBox(
+                          height: 5,
                         ),
-                      )
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(children: <Widget>[
+                            TextField(
+                              controller: CodePromoController,
+                              keyboardType: TextInputType.text,
+                              decoration: InputDecoration(
+                                  labelText: 'Code Promo',
+                                  labelStyle: TextStyle(fontSize: 14.0),
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey,
+                                  )),
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ]),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TaxiButton(
+                                  title: 'valider',
+                                  color: BrandColors.colorGreen,
+                                  onPressed: () {
+                                    print(checkCodePromo() == 0);
+                                    //if (CodePromoController.value !="")
+
+                                    //    if (checkCodePromo() != "0")
+                                    showRequestingSheet();
+                                    SendToNearbyDrivers();
+                                    //get driver // show pop up driver is coming
+                                  },
+                                ),
+                                SizedBox(width: 30),
+                                TaxiButton(
+                                  title: 'Annuler',
+                                  color: BrandColors.colorGreen,
+                                  onPressed: () {
+                                    resetApp();
+                                  },
+                                ),
+                              ]),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -472,48 +583,50 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       )
                     ]),
                 height: requestingSheetHeight,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      SizedBox(
-                        height: 10,
-                      ),
-                      SafeArea(
-                        child: Container(
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: TextLiquidFill(
-                              text: "Recherche...",
-                              waveColor: BrandColors.colorTextSemiLight,
-                              boxBackgroundColor: Colors.white,
-                              textStyle: TextStyle(
-                                  color: BrandColors.colorTextSemiLight,
-                                  fontSize: 22.0,
-                                  fontFamily: 'Brand-Bold'),
-                              boxHeight: 40,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        SizedBox(
+                          height: 10,
+                        ),
+                        SafeArea(
+                          child: Container(
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: TextLiquidFill(
+                                text: "Recherche...",
+                                waveColor: BrandColors.colorTextSemiLight,
+                                boxBackgroundColor: Colors.white,
+                                textStyle: TextStyle(
+                                    color: BrandColors.colorTextSemiLight,
+                                    fontSize: 22.0,
+                                    fontFamily: 'Brand-Bold'),
+                                boxHeight: 40,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(
-                              width: 1.0,
-                              color: BrandColors.colorLightGrayFair),
+                        Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(
+                                width: 1.0,
+                                color: BrandColors.colorLightGrayFair),
+                          ),
                         ),
-                      ),
-                      TaxiButton(
-                        title: 'Annuler',
-                        color: Colors.greenAccent,
-                        onPressed: () => {},
-                      )
-                    ],
+                        TaxiButton(
+                          title: 'Annuler',
+                          color: Colors.greenAccent,
+                          onPressed: () => {resetApp()},
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -662,6 +775,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    checkCodePromo();
     HelperMethods.getCurrent();
   }
 
@@ -686,8 +800,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     Map rideMap = {
       'created_at': DateTime.now().toString(),
-      'rider_phone': currentUserInfo.phone,
-      'rider_id': currentUserInfo.id,
+      'rider_phone': currentFirebaseUser.phoneNumber,
+      'rider_id': currentFirebaseUser.uid,
       'pickup': pickupMap,
       'destination': destinationMap,
       'driver_id': 'waiting'
