@@ -33,6 +33,10 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   Position currentPosition;
   bool drawerCanOpen = true;
+  bool errorCodePromo = false;
+  String error = " ";
+  var fares = 0.0;
+  int i = 0;
 
   var tripDirectionDetails = null;
   var CodePromoController = TextEditingController();
@@ -40,9 +44,17 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   DatabaseReference rideRef;
   BitmapDescriptor nearbyIcon;
 
-  bool nearbyDriversKeysLoaded;
+  bool nearbyDriversKeysLoaded = false;
   bool foundDriver = false;
+
+  var promotionValue;
+
+  var driver_token;
+
+  NearByDriver driver;
   void updateDriversOnMap() {
+    print('updating drivers on map');
+    print(FireHelper.nearbyDriverList);
     setState(() {
       _markers.clear();
     });
@@ -61,95 +73,145 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
-  void startTimer() {
+  void startTimer() async {
     Timer _timer;
     int _start = 10;
-    const oneSec = const Duration(seconds: 1);
-    _timer = new Timer.periodic(
-      oneSec,
-      (Timer timer) => setState(
-        () {
-          if (_start < 1) {
-            timer.cancel();
-          } else {
-            _start = _start - 1;
-          }
-        },
-      ),
-    );
+    await new Timer(const Duration(seconds: 10), () => print(DateTime.now()));
   }
 
-  void SendToNearbyDrivers() {
+  void SendToNearbyDrivers() async {
     print('sending to  drivers');
     print(FireHelper.nearbyDriverList);
     DatabaseReference DriverRef;
-    for (NearByDriver driver in FireHelper.nearbyDriverList) {
-      DatabaseReference token = FirebaseDatabase.instance
-          .reference()
-          .child('drivers/${driver.key}')
-          .child('token');
-      print('i am the token $token');
 
-      FirebaseDatabase.instance
-          .reference()
-          .child('drivers/${driver.key}/newtrip')
-          .set(rideRef.key);
+    print('i ma here $i');
+    setState(() {
+      driver = FireHelper.nearbyDriverList.elementAt(i);
+    });
+    DatabaseReference token = await FirebaseDatabase.instance
+        .reference()
+        .child('drivers/${driver.key}')
+        .once()
+        .then((DataSnapshot snap) {
+      print('la');
+      print(snap.value['token']);
+      setState(() {
+        driver_token = snap.value['token'];
+      });
+    });
 
-      HelperMethods.sendAndRetrieveMessage(driver.key, rideRef.key);
-      startTimer();
-      var driver_id = FirebaseDatabase.instance
-          .reference()
-          .child('riderRequest/${rideRef.key}')
-          .child('driver_id');
-      if (driver_id != "")
+    await FirebaseDatabase.instance
+        .reference()
+        .child('drivers/${driver.key}/newtrip')
+        .set(rideRef.key);
+
+    await Future.delayed(const Duration(seconds: 10));
+    print('driver_token $driver_token');
+    print('rideref ${rideRef.key}');
+    HelperMethods.sendAndRetrieveMessage(driver_token, rideRef.key);
+    print('sent messsage');
+    //await startTimer();
+
+    print('end timer');
+    //sleep(new Duration(seconds: 10));
+    //await Future.delayed(Duration(seconds: 10));
+    print("end two");
+    var driver_id = await FirebaseDatabase.instance
+        .reference()
+        .child('riderRequest/${rideRef.key}');
+
+    driver_id.once().then((DataSnapshot snapshot) {
+      if (snapshot.value['driver_id'] != "waiting") {
+        print(snapshot.value['driver_id']);
         setState(() {
+          print('iam hereeeeee');
           foundDriver = true;
         });
-    }
+      } else
+        setState(() {
+          //i = i + 1;
+          print(i);
+        });
+    });
   }
-
-  int checkCodePromo() {
+  void cancelRideRequest(){
+    rideRef.remove();
+    resetApp();
+  }
+  void checkCodePromo() {
     // ignore: deprecated_member_use
     print('checking code promo ');
-    if (CodePromoController.value != "")
+    var val;
+    setState(() {
+    fares = double.parse(HelperMethods.estimateFares(tripDirectionDetails).toString());  
+    });
+    
+    if (CodePromoController.text != "") {
       FirebaseFirestore.instance
           .collection('CodesPromo')
-          .where('code', isEqualTo: 'Iam')
+          .where('code', isEqualTo: CodePromoController.text)
           .get()
           .then((QuerySnapshot value) {
         print(value.docs);
         if (value.docs.isEmpty == true) {
-          print('ededed');
-          return 0;
+          setState(() {
+            promotionValue = 0;
+          });
         } else {
-          print('iam here ${value.docs[0].data()["promo"]}');
-          return value.docs[0].data()["promo"];
+          Map documentFields = value.docs[0].data();
+
+          setState(() {
+            print(documentFields['promotion']);
+            int y = int.parse(documentFields['promotion'].toString());
+            print(y);
+            promotionValue = (y / 100);
+            print(promotionValue);
+            var output = HelperMethods.estimateFares(tripDirectionDetails);
+            print("zszszszszs $output");
+            var va = double.parse(output.toString());
+            print(va);
+            fares = promotionValue * va;
+
+            print('fares $fares');
+          });
         }
       });
+    }
+    print('promotionValue $promotionValue');
     // rest of your code
   }
 
   void startGeoFireListener() {
     Geofire.initialize('driversAvailable');
     // 5 kilometers
+
     Geofire.queryAtLocation(
             currentPosition.latitude, currentPosition.longitude, 100)
         .listen((map) {
-      //print('iam heereee');
-      //print(map);
+      print('iam heereee map');
+      print(map);
+
       if (map != null) {
         var callBack = map['callBack'];
+        print(map['callback']);
         switch (callBack) {
           case Geofire.onKeyEntered:
             NearByDriver nearbyDriver = NearByDriver();
             nearbyDriver.key = map['key'];
             nearbyDriver.latitude = map['latitude'];
             nearbyDriver.longitude = map['longitude'];
-            FireHelper.nearbyDriverList.add(nearbyDriver);
+            print('adding');
+            setState(() {
+              int index = FireHelper.nearbyDriverList
+                  .indexWhere((element) => element.key == driver.key);
 
-            if (nearbyDriversKeysLoaded) {
-              updateDriversOnMap();
-            }
+              if (index < 0) FireHelper.nearbyDriverList.add(nearbyDriver);
+            });
+
+            print(FireHelper.nearbyDriverList);
+            print(nearbyDriversKeysLoaded);
+            if (nearbyDriversKeysLoaded) updateDriversOnMap();
+
             break;
 
           case Geofire.onKeyExited:
@@ -165,17 +227,23 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             nearByDriver.longitude = map['longitude'];
             FireHelper.updateNearbyLocation(nearByDriver);
             updateDriversOnMap();
+
             break;
 
           case Geofire.onGeoQueryReady:
             // All Intial Data is loaded
-            nearbyDriversKeysLoaded = true;
+
+            setState(() {
+              nearbyDriversKeysLoaded = true;
+            });
+
+            //FireHelper.nearbyDriverList = [];
             updateDriversOnMap();
             break;
         }
       }
 
-      setState(() {});
+      // setState(() {});
     });
   }
 
@@ -190,6 +258,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void showRequestingSheet() {
+    print('showinnnggggg');
     setState(() {
       rideDetailsHeight = 0;
       requestingSheetHeight = (Platform.isAndroid) ? 195 : 220;
@@ -213,8 +282,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void setupPoisitionLocator() async {
-    print('iam  hereeee ezfzefezfezfzef');
-    print('mee');
     Position currentposition = await GeolocatorPlatform.instance
         .getCurrentPosition(
             desiredAccuracy: LocationAccuracy.bestForNavigation);
@@ -226,6 +293,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     mapController.animateCamera(CameraUpdate.newCameraPosition(cp));
     String address =
         await HelperMethods.findCoordinatesAddress(currentPosition, context);
+    //FireHelper.nearbyDriverList = [];
     startGeoFireListener();
   }
 
@@ -497,10 +565,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 Expanded(
                                   child: Container(),
                                 ),
-                                Text((tripDirectionDetails != null)
-                                    ? HelperMethods.estimateFares(
-                                        tripDirectionDetails)
-                                    : ''),
+                                Text(fares == 0
+                                    ? (tripDirectionDetails != null)
+                                        ? HelperMethods.estimateFares(
+                                            tripDirectionDetails)
+                                        : ''
+                                    : fares.toString()),
                               ],
                             ),
                           ),
@@ -516,6 +586,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               keyboardType: TextInputType.text,
                               decoration: InputDecoration(
                                   labelText: 'Code Promo',
+                                  errorStyle: TextStyle(),
+                                  errorText:
+                                      errorCodePromo == false ? ' ' : error,
                                   labelStyle: TextStyle(fontSize: 14.0),
                                   hintStyle: TextStyle(
                                     color: Colors.grey,
@@ -533,13 +606,38 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                   title: 'valider',
                                   color: BrandColors.colorGreen,
                                   onPressed: () {
-                                    print(checkCodePromo() == 0);
-                                    //if (CodePromoController.value !="")
+                                    checkCodePromo();
+                                    if (promotionValue != 0) {
+                                      showRequestingSheet();
+                                      SendToNearbyDrivers();
+                                    } else {
+                                      setState(() {
+                                        error = "invalid";
+                                        errorCodePromo = true;
+                                      });
+                                    }
 
-                                    //    if (checkCodePromo() != "0")
-                                    showRequestingSheet();
-                                    SendToNearbyDrivers();
-                                    //get driver // show pop up driver is coming
+                                    //print(promotionValue);
+                                    /*
+                                    if (CodePromoController.text != "") {
+                                      var x = checkCodePromo();
+                                      print(x);
+                                      if (x != 0) {
+                                        showRequestingSheet();
+                                        SendToNearbyDrivers();
+                                      } else {
+                                        print(' je suis la ');
+                                        setState(() {
+                                          error = "invalid";
+                                          errorCodePromo = true;
+                                        });
+                                      }
+                                    } else {
+                                      
+                                      showRequestingSheet();
+                                      SendToNearbyDrivers();
+                                    }
+                                  */
                                   },
                                 ),
                                 SizedBox(width: 30),
@@ -594,20 +692,52 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         ),
                         SafeArea(
                           child: Container(
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: TextLiquidFill(
-                                text: "Recherche...",
-                                waveColor: BrandColors.colorTextSemiLight,
-                                boxBackgroundColor: Colors.white,
-                                textStyle: TextStyle(
-                                    color: BrandColors.colorTextSemiLight,
-                                    fontSize: 22.0,
-                                    fontFamily: 'Brand-Bold'),
-                                boxHeight: 40,
-                              ),
-                            ),
-                          ),
+                              child: foundDriver == false
+                                  ? Column(
+                                    children: [
+                                      SizedBox(
+                                          width: double.infinity,
+                                          child: TextLiquidFill(
+                                            text: "Recherche...",
+                                            waveColor:
+                                                BrandColors.colorTextSemiLight,
+                                            boxBackgroundColor: Colors.white,
+                                            textStyle: TextStyle(
+                                                color:
+                                                    BrandColors.colorTextSemiLight,
+                                                fontSize: 22.0,
+                                                fontFamily: 'Brand-Bold'),
+                                            boxHeight: 40,
+                                          ),
+                    
+                                        ),
+                                        TaxiButton(
+                                          color: Colors.red,
+                                          title: 'Annuler',
+                                          onPressed: ()=> {
+                                            cancelRideRequest()
+                                          }
+                                        ,)
+                                    ],
+                                  )
+                                  : Container(
+                                      width: double.infinity,
+                                      color: Colors.white,
+                                      child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16.0),
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                  'Notre chauffeur va vous contacter'),
+                                              TaxiButton(
+                                                title: 'Valider',
+                                                color: Colors.greenAccent,
+                                                onPressed: () => {resetApp()},
+                                              ),
+                                            ],
+                                          )),
+                                    )),
                         ),
                         Container(
                           height: 50,
@@ -648,6 +778,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
       drawerCanOpen = true;
       requestingSheetHeight = 0;
+      //FireHelper.nearbyDriverList = [];
       setupPoisitionLocator();
     });
   }
@@ -775,8 +906,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    checkCodePromo();
-    HelperMethods.getCurrent();
+
+    HelperMethods.getCurrent(currentUserInfo);
   }
 
   void createRideRequest() {
@@ -804,8 +935,17 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'rider_id': currentFirebaseUser.uid,
       'pickup': pickupMap,
       'destination': destinationMap,
-      'driver_id': 'waiting'
+      'driver_id': 'waiting',
+      'prix': fares
     };
+
+    if (promotionValue != null) {
+      Map promotionMap = {
+        'codePromo': CodePromoController.text,
+        'promotion': promotionValue,
+      };
+      rideMap.putIfAbsent('codePromo', () => promotionMap);
+    }
     rideRef.set(rideMap);
   }
 }

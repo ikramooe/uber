@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,9 +12,9 @@ import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/scenes/riderregister.dart';
 
+import 'datamodels/company.dart';
 import 'dataproviders/appdata.dart';
 import 'globals.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,29 +36,42 @@ Future<void> main() async {
             databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
   );
+
+  var companies =
+      await FirebaseFirestore.instance.collection('Companies').get();
+  //print(companies.docs[0].data());
+  companies.docs.forEach((element) {
+    print('heooll');
+    print(element.data());
+    Entreprises_names.add(element.data()['name']);
+    print('ezrezrzer${element.id}');
+    Entreprises.add(Company.fromJson(element.id, element.data()));
+    //print(Entreprises);
+  });
+
+  print('iam entreprises ');
+  print(Entreprises_names);
+
   currentFirebaseUser = await FirebaseAuth.instance.currentUser;
   runApp(MyApp());
 }
 
-
-class MyApp extends StatelessWidget{
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-  
     return ChangeNotifierProvider(
-        create:(context)=>AppData(),
-        child: MaterialApp(
-        theme: ThemeData(
-          fontFamily: 'Brand-Regular'
-        ),
-       initialRoute: currentFirebaseUser == null ? PhoneRegisterPage.id : MainPage.id,
-       routes: {
-         RegisterPage.id : (context)=>RegisterPage(),
-         LoginPage.id:(context)=>LoginPage(),
-         MainPage.id:(context)=>MainPage(),
-         PhoneRegisterPage.id:(context)=>PhoneRegisterPage()
-       },
-   ),
+      create: (context) => AppData(),
+      child: MaterialApp(
+        theme: ThemeData(fontFamily: 'Brand-Regular'),
+        initialRoute: currentFirebaseUser == null ? PhoneRegisterPage.id : MainPage.id,
+        
+        routes: {
+          RegisterPage.id: (context) => RegisterPage(),
+          LoginPage.id: (context) => LoginPage(),
+          MainPage.id: (context) => MainPage(),
+          PhoneRegisterPage.id: (context) => PhoneRegisterPage()
+        },
+      ),
     );
   }
 }

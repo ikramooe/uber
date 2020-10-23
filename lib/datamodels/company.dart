@@ -5,11 +5,13 @@ class Company {
   String code;
   String promo;
   String id;
+  Map employees;
 
   Company.fromJson(key, Map data) {
     this.code = data['code'];
     this.name = data['name'];
     this.promo = data['promo'];
-    this.id = data['key'];
+    this.id = key;
+    this.employees = data['employees'];
   }
 }

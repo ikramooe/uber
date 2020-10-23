@@ -23,19 +23,24 @@ import 'requesthelper.dart';
 class HelperMethods {
   static set currentUserInfo(currentUserInfo) {}
 
-  static void getCurrent() async {
+  static void getCurrent(currentUserInfo) async {
     currentFirebaseUser = FirebaseAuth.instance.currentUser;
     Userx ikram = new Userx();
     String userid = currentFirebaseUser.uid;
 
     DatabaseReference userRef =
         FirebaseDatabase.instance.reference().child('users/$userid');
-    userRef.once().then((DataSnapshot snapshot) => {
+    userRef.once().then((DataSnapshot snapshot) {
+          
+          
           if (snapshot.value != null)
             {
-              ikram.id = snapshot.key,
-              ikram.phone = snapshot.value['phone'],
-              currentUserInfo = ikram,
+              ikram.id = snapshot.key;
+              ikram.phone = snapshot.value['phone'];
+            
+              currentUserInfo.id = snapshot.key ;
+              currentUserInfo.phone = snapshot.value['phone'];
+      
             }
         });
   }
@@ -50,6 +55,8 @@ class HelperMethods {
   static Future<Map<String, dynamic>> sendAndRetrieveMessage(
       userid, rideid) async {
     print('iam userid $userid');
+    print('iam ride id $rideid');
+    
     await firebaseMessaging.requestNotificationPermissions(
       const IosNotificationSettings(
           sound: true, badge: true, alert: true, provisional: false),

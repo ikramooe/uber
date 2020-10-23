@@ -12,8 +12,12 @@ class FireHelper {
   static void updateNearbyLocation(NearByDriver driver) {
     int index =
         nearbyDriverList.indexWhere((element) => element.key == driver.key);
+    print('index $index');
+
+    if (index >= 0) {
       nearbyDriverList[index].longitude = driver.longitude;
       nearbyDriverList[index].latitude = driver.latitude;
-        
+    } else
+      nearbyDriverList.add(driver);
   }
 }

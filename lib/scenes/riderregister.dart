@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -6,44 +9,68 @@ import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/widgets/taxibutton.dart';
 
 import '../brand-colors.dart';
+import '../globals.dart';
 
-class RegisterPage extends StatelessWidget {
+class RegisterPage extends StatefulWidget {
   static const String id = "register";
 
-  var NameController = TextEditingController();
-  var EmailController = TextEditingController();
-  var PhoneController = TextEditingController();
-  var PasswordController = TextEditingController();
-  List Entreprises = [];
+  @override
+  _RegisterPageState createState() => _RegisterPageState();
+}
 
-  void getEntreprises() {
-    FirebaseDatabase.instance
-        .reference()
-        .child('companies')
-        .once()
-        .then((DataSnapshot snapshot) {
-      //here i iterate and create the list of objects
-      Map<dynamic, dynamic> companies = snapshot.value;
-      companies.forEach((key, value) {
-        Entreprises.add(Company.fromJson(key, value));
-      });
-    });
+class _RegisterPageState extends State<RegisterPage> {
+  var NameController = TextEditingController();
+
+  var PrenomController = TextEditingController();
+
+  var PhoneController = TextEditingController();
+
+  var CodeController = TextEditingController();
+
+  var company_name = Entreprises_names[0];
+  Company current;
+
+  var errorText;
+  bool checkCode;
+  void checkCodeCompany() {
+    if (company_name != "" && CodeController.text != "") {
+      int index = Entreprises_names.indexOf(company_name);
+      print(index);
+      print(Entreprises.elementAt(index - 1));
+      current = Entreprises.elementAt(index - 1);
+      print('olaaaa');
+      print(current.employees);
+      checkCode = current.employees.containsValue(CodeController.text);
+      if (!checkCode)
+        setState(() {
+          errorText = 'non valide';
+        });
+      else {
+        setState(() {
+          errorText = '';
+        });
+        RegisterUser();
+      }
+    } else
+      RegisterUser();
   }
 
   void RegisterUser() async {
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-              email: EmailController.text, password: PasswordController.text);
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
-      } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
-      }
-    } catch (e) {
-      print(e.toString());
-    }
+    DatabaseReference userRef = FirebaseDatabase.instance
+        .reference()
+        .child('users/${currentFirebaseUser.uid}');
+
+    userRef.child('nom').set(NameController.text);
+    userRef.child('prenom').set(PrenomController.text);
+    userRef.child('entreprise').set(company_name);
+    userRef.child('code').set(CodeController.text);
+    print('i am current');
+    print(current.id);
+    DocumentSnapshot current_company = await FirebaseFirestore.instance
+        .collection('Companies')
+        .doc(current.id)
+        .get();
+    current_company.data().update('user', (value) => currentFirebaseUser.uid);
   }
 
   Widget build(BuildContext context) {
@@ -80,21 +107,10 @@ class RegisterPage extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     TextField(
-                      controller: PhoneController,
-                      keyboardType: TextInputType.phone,
+                      controller: PrenomController,
+                      keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                          labelText: 'Phone',
-                          labelStyle: TextStyle(fontSize: 14.0),
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                          )),
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    TextField(
-                      controller: EmailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                          labelText: 'Nom',
+                          labelText: 'Prenom',
                           labelStyle: TextStyle(fontSize: 14.0),
                           hintStyle: TextStyle(
                             color: Colors.grey,
@@ -102,12 +118,50 @@ class RegisterPage extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     SizedBox(height: 10),
-                    SizedBox(height: 50),
+                    DropdownButton<String>(
+                      isExpanded: true,
+                      isDense: false,
+                      value: company_name,
+                      style: TextStyle(color: Colors.deepPurple),
+                      underline: Container(
+                        height: 0,
+                      ),
+                      onChanged: (String newValue) {
+                        setState(() {
+                          company_name = newValue;
+                        });
+                      },
+                      items: Entreprises_names.map<DropdownMenuItem<String>>(
+                          (item) {
+                        return DropdownMenuItem<String>(
+                          child: new Text(item),
+                          value: item.toString(),
+                        );
+                      }).toList(),
+                    ),
+                    company_name != ' '
+                        ? TextField(
+                            controller: CodeController,
+                            keyboardType: TextInputType.text,
+                            decoration: InputDecoration(
+                                labelText: 'votre code',
+                                labelStyle: TextStyle(fontSize: 14.0),
+                                errorStyle: TextStyle(),
+                                errorText: errorText,
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                )),
+                            style: TextStyle(fontSize: 14),
+                          )
+                        : Container(),
+                    SizedBox(
+                      height: 20,
+                    ),
                     TaxiButton(
                         title: 'S\'inscrire',
                         color: BrandColors.colorGreen,
                         onPressed: () {
-                          RegisterUser();
+                          checkCodeCompany();
                         }),
                   ]),
                 ),
