@@ -31,17 +31,30 @@ class _RegisterPageState extends State<RegisterPage> {
   Company current;
 
   var errorText;
-  bool checkCode;
-  void checkCodeCompany() {
+  bool checkCode = false;
+  int index;
+
+  void checkCodeCompany() async {
+    checkCode = false;
     if (company_name != "" && CodeController.text != "") {
       int index = Entreprises_names.indexOf(company_name);
       print(index);
       print(Entreprises.elementAt(index - 1));
       current = Entreprises.elementAt(index - 1);
       print('olaaaa');
-      print(current.employees);
-      checkCode = current.employees.containsValue(CodeController.text);
-      if (!checkCode)
+      //print(current.codes);
+      for (Map element in current.codes) {
+        if (element['code'] == CodeController.text) {
+          setState(() {
+            checkCode = true;
+            index = current.codes.indexOf(element);
+            print(index);
+          });
+          break;
+        }
+      }
+      print('frfrfrf $checkCode');
+      if (checkCode == false)
         setState(() {
           errorText = 'non valide';
         });
@@ -49,13 +62,14 @@ class _RegisterPageState extends State<RegisterPage> {
         setState(() {
           errorText = '';
         });
-        RegisterUser();
+        RegisterUser(index);
       }
     } else
-      RegisterUser();
+      RegisterUser(index);
   }
 
-  void RegisterUser() async {
+  void RegisterUser(index) async {
+    print('iam here register $index');
     DatabaseReference userRef = FirebaseDatabase.instance
         .reference()
         .child('users/${currentFirebaseUser.uid}');
@@ -66,11 +80,35 @@ class _RegisterPageState extends State<RegisterPage> {
     userRef.child('code').set(CodeController.text);
     print('i am current');
     print(current.id);
-    DocumentSnapshot current_company = await FirebaseFirestore.instance
+    var currentCompany = await FirebaseFirestore.instance
         .collection('Companies')
-        .doc(current.id)
-        .get();
-    current_company.data().update('user', (value) => currentFirebaseUser.uid);
+        .doc(current.id);
+
+    Map usersCode = {
+      'user': currentFirebaseUser.uid,
+      'code': CodeController.text,
+    };
+    print(index);
+    if (index != null) {
+      current.codes.removeAt(index);
+      current.codes.add(usersCode);
+
+      currentCompany.set({'codes': current.codes,'name':current.name});
+      FirebaseDatabase.instance
+          .reference()
+          .child('users/${currentFirebaseUser.uid}')
+          .update({'entreprise': current.name, 'code': CodeController.text});
+    }
+
+    /*
+    currentCompany.update('codes').then((value){
+         if(value.code==CodeController.text)
+             value.user="EEEE";
+    })
+    */
+
+    //print(currentCompany.data());
+    //current_company.data().update('user', (value) => currentFirebaseUser.uid);
   }
 
   Widget build(BuildContext context) {

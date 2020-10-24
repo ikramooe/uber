@@ -35,7 +35,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool drawerCanOpen = true;
   bool errorCodePromo = false;
   String error = " ";
-  var fares = 0.0;
+  var fares;
   int i = 0;
 
   var tripDirectionDetails = null;
@@ -52,6 +52,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   var driver_token;
 
   NearByDriver driver;
+
+  var showvalue = false;
   void updateDriversOnMap() {
     print('updating drivers on map');
     print(FireHelper.nearbyDriverList);
@@ -134,49 +136,59 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         });
     });
   }
-  void cancelRideRequest(){
+
+  void cancelRideRequest() {
     rideRef.remove();
     resetApp();
   }
-  void checkCodePromo() {
+
+  void checkCodePromo() async {
     // ignore: deprecated_member_use
     print('checking code promo ');
     var val;
     setState(() {
-    fares = double.parse(HelperMethods.estimateFares(tripDirectionDetails).toString());  
+      fares = double.parse(
+          HelperMethods.estimateFares(tripDirectionDetails).toString());
     });
-    
-    if (CodePromoController.text != "") {
-      FirebaseFirestore.instance
-          .collection('CodesPromo')
-          .where('code', isEqualTo: CodePromoController.text)
-          .get()
-          .then((QuerySnapshot value) {
-        print(value.docs);
-        if (value.docs.isEmpty == true) {
-          setState(() {
-            promotionValue = 0;
-          });
-        } else {
-          Map documentFields = value.docs[0].data();
 
-          setState(() {
-            print(documentFields['promotion']);
-            int y = int.parse(documentFields['promotion'].toString());
-            print(y);
-            promotionValue = (y / 100);
-            print(promotionValue);
-            var output = HelperMethods.estimateFares(tripDirectionDetails);
-            print("zszszszszs $output");
-            var va = double.parse(output.toString());
-            print(va);
-            fares = promotionValue * va;
+    await FirebaseFirestore.instance
+        .collection('CodesPromo')
+        .where('code', isEqualTo: CodePromoController.text)
+        .get()
+        .then((QuerySnapshot value) {
+      print('rrr $value');
+      print(value.docs);
+      if (value.docs.isEmpty == true) {
+        setState(() {
+          promotionValue = 0;
+          errorCodePromo = true;
+          error = "invalid";
+          CodePromoController.text = "";
+        });
+      } else {
+        Map documentFields = value.docs[0].data();
 
-            print('fares $fares');
-          });
-        }
-      });
-    }
+        setState(() {
+          errorCodePromo = false;
+          error = "";
+          print(documentFields['promotion']);
+          int y = int.parse(documentFields['promotion'].toString());
+          print(y);
+          promotionValue = (y / 100);
+          print(promotionValue);
+          var output = HelperMethods.estimateFares(tripDirectionDetails);
+          print("zszszszszs $output");
+          var va = double.parse(output.toString());
+          print(va);
+
+          fares = promotionValue * va;
+
+          print('fares $fares');
+          showRequestingSheet();
+        });
+      }
+    });
+
     print('promotionValue $promotionValue');
     // rest of your code
   }
@@ -260,6 +272,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   void showRequestingSheet() {
     print('showinnnggggg');
     setState(() {
+      fares = double.parse(
+          HelperMethods.estimateFares(tripDirectionDetails).toString());
+
       rideDetailsHeight = 0;
       requestingSheetHeight = (Platform.isAndroid) ? 195 : 220;
       drawerCanOpen = false;
@@ -565,7 +580,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 Expanded(
                                   child: Container(),
                                 ),
-                                Text(fares == 0
+                                Text(fares == null
                                     ? (tripDirectionDetails != null)
                                         ? HelperMethods.estimateFares(
                                             tripDirectionDetails)
@@ -576,27 +591,50 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           ),
                         ),
                         SizedBox(
-                          height: 5,
+                          height: 2,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(children: <Widget>[
-                            TextField(
-                              controller: CodePromoController,
-                              keyboardType: TextInputType.text,
-                              decoration: InputDecoration(
-                                  labelText: 'Code Promo',
-                                  errorStyle: TextStyle(),
-                                  errorText:
-                                      errorCodePromo == false ? ' ' : error,
-                                  labelStyle: TextStyle(fontSize: 14.0),
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey,
-                                  )),
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ]),
-                        ),
+                        currentUserInfo.entreprise != null
+                            ? Row(
+                                children: [
+                                  Checkbox(
+                                    checkColor: Colors.greenAccent,
+                                    value: showvalue,
+                                    onChanged: (bool value) {
+                                      setState(() {
+                                        showvalue = value;
+                                        if (value == true)
+                                          fares = 0;
+                                        else
+                                          checkCodePromo();
+                                      });
+                                    },
+                                  ),
+                                  Text('utiliser code entreprise')
+                                ],
+                              )
+                            : Container(),
+                        showvalue == false
+                            ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(children: <Widget>[
+                                  TextField(
+                                    controller: CodePromoController,
+                                    keyboardType: TextInputType.text,
+                                    decoration: InputDecoration(
+                                        labelText: 'Code ',
+                                        errorStyle: TextStyle(),
+                                        errorText: errorCodePromo == false
+                                            ? ' '
+                                            : error,
+                                        labelStyle: TextStyle(fontSize: 14.0),
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey,
+                                        )),
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ]),
+                              )
+                            : Container(),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Row(
@@ -606,15 +644,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                   title: 'valider',
                                   color: BrandColors.colorGreen,
                                   onPressed: () {
-                                    checkCodePromo();
-                                    if (promotionValue != 0) {
+                                    if (CodePromoController.text != "") {
+                                      checkCodePromo();
+                                      if (errorCodePromo) {
+                                        //showRequestingSheet();
+                                        SendToNearbyDrivers();
+                                      }
+                                    } else {
                                       showRequestingSheet();
                                       SendToNearbyDrivers();
-                                    } else {
-                                      setState(() {
-                                        error = "invalid";
-                                        errorCodePromo = true;
-                                      });
                                     }
 
                                     //print(promotionValue);
@@ -694,8 +732,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           child: Container(
                               child: foundDriver == false
                                   ? Column(
-                                    children: [
-                                      SizedBox(
+                                      children: [
+                                        SizedBox(
                                           width: double.infinity,
                                           child: TextLiquidFill(
                                             text: "Recherche...",
@@ -703,23 +741,21 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                                 BrandColors.colorTextSemiLight,
                                             boxBackgroundColor: Colors.white,
                                             textStyle: TextStyle(
-                                                color:
-                                                    BrandColors.colorTextSemiLight,
+                                                color: BrandColors
+                                                    .colorTextSemiLight,
                                                 fontSize: 22.0,
                                                 fontFamily: 'Brand-Bold'),
                                             boxHeight: 40,
                                           ),
-                    
                                         ),
                                         TaxiButton(
                                           color: Colors.red,
                                           title: 'Annuler',
-                                          onPressed: ()=> {
-                                            cancelRideRequest()
-                                          }
-                                        ,)
-                                    ],
-                                  )
+                                          onPressed: () =>
+                                              {cancelRideRequest()},
+                                        )
+                                      ],
+                                    )
                                   : Container(
                                       width: double.infinity,
                                       color: Colors.white,
@@ -913,6 +949,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   void createRideRequest() {
     rideRef =
         FirebaseDatabase.instance.reference().child('riderRequest').push();
+
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination =
         Provider.of<AppData>(context, listen: false).destinationAddress;
@@ -938,14 +975,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'driver_id': 'waiting',
       'prix': fares
     };
-
+    Map promotionMap = {'codePromo': '', 'promotion': ''};
     if (promotionValue != null) {
-      Map promotionMap = {
+      promotionMap = {
         'codePromo': CodePromoController.text,
         'promotion': promotionValue,
       };
-      rideMap.putIfAbsent('codePromo', () => promotionMap);
     }
+    if (showvalue == true) {
+      promotionMap = {
+        'codePromo': CodePromoController.text,
+        'promotion': promotionValue,
+      };
+    }
+    rideMap.putIfAbsent('promotion', () => promotionMap);
     rideRef.set(rideMap);
   }
 }

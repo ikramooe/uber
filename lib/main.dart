@@ -53,6 +53,7 @@ Future<void> main() async {
   print(Entreprises_names);
 
   currentFirebaseUser = await FirebaseAuth.instance.currentUser;
+
   runApp(MyApp());
 }
 
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         theme: ThemeData(fontFamily: 'Brand-Regular'),
         initialRoute: currentFirebaseUser == null ? PhoneRegisterPage.id : MainPage.id,
-        
+
         routes: {
           RegisterPage.id: (context) => RegisterPage(),
           LoginPage.id: (context) => LoginPage(),

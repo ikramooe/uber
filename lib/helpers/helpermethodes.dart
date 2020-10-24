@@ -31,18 +31,23 @@ class HelperMethods {
     DatabaseReference userRef =
         FirebaseDatabase.instance.reference().child('users/$userid');
     userRef.once().then((DataSnapshot snapshot) {
-          
-          
-          if (snapshot.value != null)
-            {
-              ikram.id = snapshot.key;
-              ikram.phone = snapshot.value['phone'];
-            
-              currentUserInfo.id = snapshot.key ;
-              currentUserInfo.phone = snapshot.value['phone'];
-      
-            }
-        });
+      if (snapshot.value != null) {
+        ikram.id = snapshot.key;
+        ikram.phone = snapshot.value['phone'];
+
+        currentUserInfo.id = snapshot.key;
+        currentUserInfo.phone = snapshot.value['phone'];
+
+        print(snapshot.value['entreprise']);
+        if (snapshot.value['entreprise'] != null) {
+          currentUserInfo.entreprise = snapshot.value['entreprise'];
+        }
+        if (snapshot.value['earnings'] != null) {
+          currentUserInfo.earnings = snapshot.value['earnings'];
+        }
+      }
+    });
+    print('current user ${currentUserInfo.entreprise}');
   }
 
   static double generateRandomNumber(int max) {
@@ -56,7 +61,7 @@ class HelperMethods {
       userid, rideid) async {
     print('iam userid $userid');
     print('iam ride id $rideid');
-    
+
     await firebaseMessaging.requestNotificationPermissions(
       const IosNotificationSettings(
           sound: true, badge: true, alert: true, provisional: false),
@@ -161,6 +166,7 @@ class HelperMethods {
     //duree en minutes
     // ignore: unused_local_variable
     double timeFare = (details.distanceValue / 60);
+
     return distanceFare.toString();
   }
 }
