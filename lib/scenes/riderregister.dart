@@ -53,7 +53,7 @@ class _RegisterPageState extends State<RegisterPage> {
           break;
         }
       }
-      print('frfrfrf $checkCode');
+      print(' $checkCode');
       if (checkCode == false)
         setState(() {
           errorText = 'non valide';
@@ -70,45 +70,38 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void RegisterUser(index) async {
     print('iam here register $index');
-    DatabaseReference userRef = FirebaseDatabase.instance
-        .reference()
-        .child('users/${currentFirebaseUser.uid}');
+    print(currentFirebaseUser.uid);
 
-    userRef.child('nom').set(NameController.text);
-    userRef.child('prenom').set(PrenomController.text);
-    userRef.child('entreprise').set(company_name);
-    userRef.child('code').set(CodeController.text);
-    print('i am current');
-    print(current.id);
-    var currentCompany = await FirebaseFirestore.instance
-        .collection('Companies')
-        .doc(current.id);
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentFirebaseUser.uid)
+        .update({
+      'nom': NameController.text,
+      'prenom': PrenomController.text,
+      'entreprise': company_name,
+      'code': CodeController.text
+    });
 
-    Map usersCode = {
-      'user': currentFirebaseUser.uid,
-      'code': CodeController.text,
-    };
-    print(index);
+   
     if (index != null) {
+      var currentCompany = await FirebaseFirestore.instance
+          .collection('Companies')
+          .doc(current.id);
+
+      Map usersCode = {
+        'user': currentFirebaseUser.uid,
+        'code': CodeController.text,
+      };
       current.codes.removeAt(index);
       current.codes.add(usersCode);
 
-      currentCompany.set({'codes': current.codes,'name':current.name});
-      FirebaseDatabase.instance
-          .reference()
-          .child('users/${currentFirebaseUser.uid}')
-          .update({'entreprise': current.name, 'code': CodeController.text});
+      currentCompany.set({'codes': current.codes, 'name': current.name});
+
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentFirebaseUser.uid)
+          .update({'entreprise': company_name, 'code': CodeController.text});
     }
-
-    /*
-    currentCompany.update('codes').then((value){
-         if(value.code==CodeController.text)
-             value.user="EEEE";
-    })
-    */
-
-    //print(currentCompany.data());
-    //current_company.data().update('user', (value) => currentFirebaseUser.uid);
   }
 
   Widget build(BuildContext context) {

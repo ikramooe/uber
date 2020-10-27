@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_database/firebase_database.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tProject/helpers/referralhelper.dart';
 import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/riderphone.dart';
@@ -39,7 +39,7 @@ Future<void> main() async {
 
   var companies =
       await FirebaseFirestore.instance.collection('Companies').get();
-  //print(companies.docs[0].data());
+
   companies.docs.forEach((element) {
     print('heooll');
     print(element.data());
@@ -48,11 +48,12 @@ Future<void> main() async {
     Entreprises.add(Company.fromJson(element.id, element.data()));
     //print(Entreprises);
   });
-
-  print('iam entreprises ');
   print(Entreprises_names);
-
   currentFirebaseUser = await FirebaseAuth.instance.currentUser;
+  print(currentFirebaseUser.uid);
+  ReferralHelper.initDynamicLinks();
+  ReferralHelper.initialize();
+  ReferralHelper.createLink();
 
   runApp(MyApp());
 }
@@ -64,8 +65,9 @@ class MyApp extends StatelessWidget {
       create: (context) => AppData(),
       child: MaterialApp(
         theme: ThemeData(fontFamily: 'Brand-Regular'),
-        initialRoute: currentFirebaseUser == null ? PhoneRegisterPage.id : MainPage.id,
-
+        initialRoute: MainPage.id, 
+             
+          
         routes: {
           RegisterPage.id: (context) => RegisterPage(),
           LoginPage.id: (context) => LoginPage(),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // ignore: duplicate_import
@@ -27,7 +28,19 @@ class HelperMethods {
     currentFirebaseUser = FirebaseAuth.instance.currentUser;
     Userx ikram = new Userx();
     String userid = currentFirebaseUser.uid;
-
+    //firestore
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(userid)
+        .get()
+        .then((value) {
+      currentUserInfo.id = value.data()['key'];
+      currentUserInfo.phone = value.data()['phone'];
+      if (value.data()['entreprise'] != null) {
+        currentUserInfo.entreprise = value.data()['entreprise'];
+      }
+    });
+    //realtime database
     DatabaseReference userRef =
         FirebaseDatabase.instance.reference().child('users/$userid');
     userRef.once().then((DataSnapshot snapshot) {
@@ -41,9 +54,6 @@ class HelperMethods {
         print(snapshot.value['entreprise']);
         if (snapshot.value['entreprise'] != null) {
           currentUserInfo.entreprise = snapshot.value['entreprise'];
-        }
-        if (snapshot.value['earnings'] != null) {
-          currentUserInfo.earnings = snapshot.value['earnings'];
         }
       }
     });

@@ -17,6 +17,7 @@ import 'package:tProject/datamodels/datadetails.dart';
 import 'package:tProject/datamodels/nearbydriver.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/helpers/firehelper.dart';
+import 'package:tProject/scenes/points.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
@@ -41,7 +42,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   var tripDirectionDetails = null;
   var CodePromoController = TextEditingController();
 
-  DatabaseReference rideRef;
+  var rideRef;
   BitmapDescriptor nearbyIcon;
 
   bool nearbyDriversKeysLoaded = false;
@@ -85,11 +86,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     print('sending to  drivers');
     print(FireHelper.nearbyDriverList);
     DatabaseReference DriverRef;
-
+   
     print('i ma here $i');
     setState(() {
       driver = FireHelper.nearbyDriverList.elementAt(i);
     });
+
     DatabaseReference token = await FirebaseDatabase.instance
         .reference()
         .child('drivers/${driver.key}')
@@ -102,26 +104,55 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       });
     });
 
-    await FirebaseDatabase.instance
-        .reference()
-        .child('drivers/${driver.key}/newtrip')
-        .set(rideRef.key);
+    var driverToken = await FirebaseFirestore.instance
+        .collection('drivers')
+        .doc(driver.key)
+        .get()
+        .then((snap) async {
+      print('la');
+      print(snap.data()['token']);
+      setState(() {
+        driver_token = snap.data()['token'];
+      });
 
-    await Future.delayed(const Duration(seconds: 10));
-    print('driver_token $driver_token');
-    print('rideref ${rideRef.key}');
-    HelperMethods.sendAndRetrieveMessage(driver_token, rideRef.key);
-    print('sent messsage');
-    //await startTimer();
+      await FirebaseDatabase.instance
+          .reference()
+          .child('drivers/${driver.key}/newtrip')
+          .set(rideRef.key);
 
-    print('end timer');
-    //sleep(new Duration(seconds: 10));
-    //await Future.delayed(Duration(seconds: 10));
-    print("end two");
+      FirebaseFirestore.instance
+          .collection('drivers')
+          .doc(driver.key)
+          .update({'newtrip': rideRef.key});
+
+      await Future.delayed(const Duration(seconds: 10));
+      print('driver_token $driver_token');
+      print('rideref ${rideRef.key}');
+      HelperMethods.sendAndRetrieveMessage(driver_token, rideRef.key);
+      print('sent messsage');
+      //await startTimer();
+
+      print('end timer');
+      //sleep(new Duration(seconds: 10));
+      //await Future.delayed(Duration(seconds: 10));
+      print("end two");
+
+      var driver_id = await FirebaseFirestore.instance
+          .collection('rideRequests')
+          .doc(rideRef.key);
+
+      driver_id.get().then((value) {
+        if (value.data()['driver_id'] != 'waiting')
+          setState(() {
+            foundDriver = true;
+          });
+      });
+
+      /*
     var driver_id = await FirebaseDatabase.instance
         .reference()
         .child('riderRequest/${rideRef.key}');
-
+    
     driver_id.once().then((DataSnapshot snapshot) {
       if (snapshot.value['driver_id'] != "waiting") {
         print(snapshot.value['driver_id']);
@@ -134,6 +165,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           //i = i + 1;
           print(i);
         });
+    */
     });
   }
 
@@ -195,21 +227,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   void startGeoFireListener() {
     Geofire.initialize('driversAvailable');
-    // 5 kilometers
-
     Geofire.queryAtLocation(
             currentPosition.latitude, currentPosition.longitude, 100)
         .listen((map) {
-      print('iam heereee map');
-      print(map);
-
       if (map != null) {
         var callBack = map['callBack'];
         print(map['callback']);
         switch (callBack) {
           case Geofire.onKeyEntered:
             NearByDriver nearbyDriver = NearByDriver();
-            nearbyDriver.key = map['key'];
+            nearbyDriver.key = map[' key'];
             nearbyDriver.latitude = map['latitude'];
             nearbyDriver.longitude = map['longitude'];
             print('adding');
@@ -297,6 +324,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void setupPoisitionLocator() async {
+    print('hello world setting up position locator');
     Position currentposition = await GeolocatorPlatform.instance
         .getCurrentPosition(
             desiredAccuracy: LocationAccuracy.bestForNavigation);
@@ -372,9 +400,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 height: 10,
               ),
               ListTile(
-                leading: Icon(Icons.card_giftcard),
-                title: Text('Mes Points', style: kDrawerItemStyle),
-              ),
+                  leading: Icon(Icons.card_giftcard),
+                  title: Text('Mes Points', style: kDrawerItemStyle),
+                  onTap: () async {
+                    await Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => MyPoints()));
+                  }),
               ListTile(
                 leading: Icon(Icons.card_giftcard),
                 title: Text('two', style: kDrawerItemStyle),
@@ -403,7 +434,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               setState(() {
                 mapBottomPadding = (Platform.isAndroid) ? 200 : 270;
               });
-              //
+              print('setting up position');
               setupPoisitionLocator();
             },
           ),
@@ -942,14 +973,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
     HelperMethods.getCurrent(currentUserInfo);
   }
 
-  void createRideRequest() {
-    rideRef =
-        FirebaseDatabase.instance.reference().child('riderRequest').push();
-
+  void createRideRequest() async {
+    print('i am here here create ride request');
+    rideRef = FirebaseFirestore.instance.collection('rideRequests');
+    print('rideref $rideRef');
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination =
         Provider.of<AppData>(context, listen: false).destinationAddress;
@@ -975,6 +1005,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'driver_id': 'waiting',
       'prix': fares
     };
+  
     Map promotionMap = {'codePromo': '', 'promotion': ''};
     if (promotionValue != null) {
       promotionMap = {
@@ -988,7 +1019,33 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         'promotion': promotionValue,
       };
     }
-    rideMap.putIfAbsent('promotion', () => promotionMap);
-    rideRef.set(rideMap);
+   
+    print('i am rideMap');
+    print(rideMap);
+
+    await FirebaseFirestore.instance.collection('rideRequests').add({
+      'created_at': DateTime.now().toString(),
+      'rider_phone': currentFirebaseUser.phoneNumber,
+      'rider_id': currentFirebaseUser.uid,
+      'pickup': pickupMap,
+      'destination': destinationMap,
+      'driver_id': 'waiting',
+      'prix': fares,
+      'promotion':promotionMap
+    }).then((value) => {
+          setState(() {
+            rideRef = value.id;
+          })
+        });
+    
+    //print(docRef);
+    print('i am doc ref $rideRef');
+    /* 
+    rideRef = FirebaseFirestore.instance
+        .collection('rideRequests')
+        .doc(docRef.toString())
+        .get();
+
+    */
   }
 }

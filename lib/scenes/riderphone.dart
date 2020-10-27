@@ -28,8 +28,9 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
   var phoneIsoCode;
 
   Future<void> _submit() async {
+    print(phoneNumber);
     var verifyPhoneNumber = await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: "+213796580458",
+      phoneNumber: "+213"+PhoneController.text,
       // successful verification
       verificationCompleted: (PhoneAuthCredential credential) {
         print("success");
@@ -64,14 +65,11 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
         print('User is currently signed out!');
       } else {
         //save user information to database
-        DatabaseReference newUserRef =
-            FirebaseDatabase.instance.reference().child('users/${user.uid}');
-        // the data to be saved user phone number
-        Map userMap = {
-          'phone': phoneNumber,
-        };
-        newUserRef.set(userMap);
-        // go to main page
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({'phone': phoneNumber});
+        
         Navigator.pushNamedAndRemoveUntil(
             context, MainPage.id, (route) => false);
       }
@@ -82,13 +80,13 @@ class _PhoneRegisterState extends State<PhoneRegisterPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    
   }
 
   void onPhoneNumberChange(
       String number, String internationalizedPhoneNumber, String isoCode) {
     setState(() {
       phoneNumber = number;
+      PhoneController.text = number;
     });
   }
 
