@@ -128,9 +128,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void SendToNearbyDrivers() async {
-    print('snedddddddiiingg');
     if (FireHelper.nearbyDriverList.length == 0) {
-      print('hedededededed');
       cancelRideRequest();
       noDriverFound();
       return;
@@ -754,26 +752,51 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                   ? Column(
                                       children: [
                                         SizedBox(
-                                          width: double.infinity,
-                                          child: TextLiquidFill(
-                                            text: "Recherche...",
-                                            waveColor:
-                                                BrandColors.colorTextSemiLight,
-                                            boxBackgroundColor: Colors.white,
-                                            textStyle: TextStyle(
-                                                color: BrandColors
-                                                    .colorTextSemiLight,
-                                                fontSize: 22.0,
-                                                fontFamily: 'Brand-Bold'),
-                                            boxHeight: 40,
-                                          ),
-                                        ),
-                                        TaxiButton(
-                                          color: Colors.red,
-                                          title: 'Annuler',
-                                          onPressed: () =>
-                                              {cancelRideRequest()},
-                                        )
+                        width: double.infinity,
+                        child: TextLiquidFill(
+                        text: 'Requesting a Ride...',
+                        waveColor: BrandColors.colorTextSemiLight,
+                        boxBackgroundColor: Colors.white,
+                        textStyle: TextStyle(
+                          color: BrandColors.colorText,
+                          fontSize: 22.0,
+                          fontFamily: 'Brand-Bold'
+                        ),
+                        boxHeight: 40.0,
+                      ),
+                      ),
+
+                      SizedBox(height: 20,),
+
+                      GestureDetector(
+                        onTap: (){
+                          cancelRideRequest();
+                          
+                        },
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(width: 1.0, color: BrandColors.colorLightGrayFair),
+
+                          ),
+                          child: Icon(Icons.close, size: 25,),
+                        ),
+                      ),
+
+                      SizedBox(height: 10,),
+
+                      Container(
+                        width: double.infinity,
+                        child: Text(
+                          'Cancel ride',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+
                                       ],
                                     )
                                   : Container(
