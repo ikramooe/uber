@@ -36,7 +36,7 @@ Future<void> main() async {
             databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
   );
-
+  
   var companies =
       await FirebaseFirestore.instance.collection('Companies').get();
 
@@ -50,11 +50,7 @@ Future<void> main() async {
   });
   print(Entreprises_names);
   currentFirebaseUser = await FirebaseAuth.instance.currentUser;
-  print(currentFirebaseUser.uid);
-  ReferralHelper.initDynamicLinks();
-  ReferralHelper.initialize();
-  ReferralHelper.createLink();
-
+  
   runApp(MyApp());
 }
 
@@ -65,8 +61,8 @@ class MyApp extends StatelessWidget {
       create: (context) => AppData(),
       child: MaterialApp(
         theme: ThemeData(fontFamily: 'Brand-Regular'),
-        initialRoute: MainPage.id, 
-             
+        initialRoute:  
+         currentFirebaseUser ==null ?   RegisterPage.id :MainPage.id,  
           
         routes: {
           RegisterPage.id: (context) => RegisterPage(),

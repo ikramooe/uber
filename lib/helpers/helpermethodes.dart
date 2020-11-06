@@ -26,7 +26,6 @@ class HelperMethods {
 
   static void getCurrent(currentUserInfo) async {
     currentFirebaseUser = FirebaseAuth.instance.currentUser;
-    Userx ikram = new Userx();
     String userid = currentFirebaseUser.uid;
     //firestore
     FirebaseFirestore.instance
@@ -45,9 +44,7 @@ class HelperMethods {
         FirebaseDatabase.instance.reference().child('users/$userid');
     userRef.once().then((DataSnapshot snapshot) {
       if (snapshot.value != null) {
-        ikram.id = snapshot.key;
-        ikram.phone = snapshot.value['phone'];
-
+        
         currentUserInfo.id = snapshot.key;
         currentUserInfo.phone = snapshot.value['phone'];
 
