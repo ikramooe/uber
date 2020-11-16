@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -19,6 +18,7 @@ import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/helpers/firehelper.dart';
 import 'package:tProject/helpers/referralhelper.dart';
 import 'package:tProject/scenes/points.dart';
+import 'package:tProject/scenes/profile.dart';
 import 'package:tProject/scenes/searchpage.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
@@ -99,13 +99,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void startTimer() async {
-    Timer _timer;
-    int _start = 10;
+    
+    
     await new Timer(const Duration(seconds: 10), () => print(DateTime.now()));
   }
 
   void notifyDriver(NearByDriver driver) async {
-    var driverToken = await FirebaseFirestore.instance
+    var driverToken =  FirebaseFirestore.instance
         .collection('drivers')
         .doc(driver.key)
         .get()
@@ -156,7 +156,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void cancelRideRequest() {
-    FirebaseFirestore.instance.collection('rideRequests').doc(rideId) .delete();
+    FirebaseFirestore.instance.collection('rideRequests').doc(rideId).delete();
     resetApp();
   }
 
@@ -361,7 +361,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     ),
                     child: Row(children: <Widget>[
                       Image.asset(
-                        "Images/user_icon.png",
+                        "images/user_icon.png",
                         height: 60,
                         width: 60,
                       ),
@@ -387,16 +387,22 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 height: 10,
               ),
               ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('Profile', style: kDrawerItemStyle),
+                  onTap: () async {
+                    await Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => ProfilePage()));
+                  }),
+              
+              
+              ListTile(
                   leading: Icon(Icons.card_giftcard),
                   title: Text('Mes Points', style: kDrawerItemStyle),
                   onTap: () async {
                     await Navigator.push(context,
                         MaterialPageRoute(builder: (context) => MyPoints()));
                   }),
-              ListTile(
-                leading: Icon(Icons.card_giftcard),
-                title: Text('two', style: kDrawerItemStyle),
-              ),
+              
             ],
           ),
         ),
@@ -611,7 +617,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         SizedBox(
                           height: 2,
                         ),
-                        currentUserInfo.entreprise != null
+                        (currentUserInfo.entreprise != null &&
+                                    currentUserInfo.entreprise != "")
+                            
                             ? Row(
                                 children: [
                                   Checkbox(
@@ -627,11 +635,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                       });
                                     },
                                   ),
-                                  Text('utiliser code entreprise')
+                                  Text(
+                                      'utiliser code entreprise ${currentUserInfo.entreprise}')
                                 ],
                               )
-                            : Container(),
-                        showvalue == false
+                              : Container(),
+                            showvalue == false
                             ? Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(children: <Widget>[
@@ -752,51 +761,55 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                   ? Column(
                                       children: [
                                         SizedBox(
-                        width: double.infinity,
-                        child: TextLiquidFill(
-                        text: 'Requesting a Ride...',
-                        waveColor: BrandColors.colorTextSemiLight,
-                        boxBackgroundColor: Colors.white,
-                        textStyle: TextStyle(
-                          color: BrandColors.colorText,
-                          fontSize: 22.0,
-                          fontFamily: 'Brand-Bold'
-                        ),
-                        boxHeight: 40.0,
-                      ),
-                      ),
-
-                      SizedBox(height: 20,),
-
-                      GestureDetector(
-                        onTap: (){
-                          cancelRideRequest();
-                          
-                        },
-                        child: Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(width: 1.0, color: BrandColors.colorLightGrayFair),
-
-                          ),
-                          child: Icon(Icons.close, size: 25,),
-                        ),
-                      ),
-
-                      SizedBox(height: 10,),
-
-                      Container(
-                        width: double.infinity,
-                        child: Text(
-                          'Cancel ride',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-
+                                          width: double.infinity,
+                                          child: TextLiquidFill(
+                                            text: 'Requesting a Ride...',
+                                            waveColor:
+                                                BrandColors.colorTextSemiLight,
+                                            boxBackgroundColor: Colors.white,
+                                            textStyle: TextStyle(
+                                                color: BrandColors.colorText,
+                                                fontSize: 22.0,
+                                                fontFamily: 'Brand-Bold'),
+                                            boxHeight: 40.0,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            cancelRideRequest();
+                                          },
+                                          child: Container(
+                                            height: 50,
+                                            width: 50,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              border: Border.all(
+                                                  width: 1.0,
+                                                  color: BrandColors
+                                                      .colorLightGrayFair),
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 25,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        Container(
+                                          width: double.infinity,
+                                          child: Text(
+                                            'Cancel ride',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
                                       ],
                                     )
                                   : Container(
@@ -1128,7 +1141,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    HelperMethods.getCurrent(currentUserInfo);
+    HelperMethods.getCurrent();
+    print('getting current user info ');
+    print(currentUserInfo.entreprise!=null);
+    print(currentUserInfo.entreprise!="");
     ReferralHelper.initDynamicLinks();
     ReferralHelper.initialize();
     ReferralHelper.createLink();
@@ -1140,19 +1156,18 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination =
         Provider.of<AppData>(context, listen: false).destinationAddress;
-
+  
     Map pickupMap = {
       'latitude': pickup.latitude.toString(),
       'longitude': pickup.longitude.toString(),
       'place': pickup.placeName
     };
-
     Map destinationMap = {
       'latitude': destination.latitude.toString(),
       'longitude': destination.longitude.toString(),
       'place': destination.placeName
     };
-
+    
     Map rideMap = {
       'created_at': DateTime.now().toString(),
       'rider_phone': currentFirebaseUser.phoneNumber,

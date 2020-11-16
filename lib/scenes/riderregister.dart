@@ -62,7 +62,6 @@ class _RegisterPageState extends State<RegisterPage> {
       print(index);
       print(Entreprises.elementAt(index - 1));
       current = Entreprises.elementAt(index - 1);
-      print('olaaaa');
       //print(current.codes);
       for (Map element in current.codes) {
         if (element['code'] == CodeController.text) {
@@ -94,8 +93,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void RegisterUser(index) async {
-    print('iam here register $index');
-    //print(currentFirebaseUser.uid);
     NameController.text == "" ? validNom = false : validNom = true;
     PrenomController.text == "" ? validPrenom = false : validPrenom = true;
     if (PhoneController.text == "") {

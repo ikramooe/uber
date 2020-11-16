@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'package:tProject/helpers/referralhelper.dart';
 import 'package:tProject/scenes/mainpage.dart';
-import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
 
-import '../globals.dart';
+
 
 class MyPoints extends StatefulWidget {
   static const String id = "points";
@@ -129,6 +128,6 @@ class _MyPointsState extends State<MyPoints> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    HelperMethods.getCurrent(currentUserInfo);
+    HelperMethods.getCurrent();
   }
 }

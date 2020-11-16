@@ -15,6 +15,8 @@ final CameraPosition kLake = CameraPosition(
 User currentFirebaseUser;
 Userx currentUserInfo = new Userx();
 
+String entreprise;
+
 final String serverToken =
     'AAAAmU5n7PA:APA91bFEalSyM0RBT0uTlYfD7NwMn0CWaNMjJeGfYhJ8LD9rt5CvdWkkASAn_O1AkjKY_0ItzcdbTjB9Fix17oFWKAi0p-XPfHpebTKKwJQ643UAUL0kft6i7pbOWuRuNkluU8F2XROW';
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging();

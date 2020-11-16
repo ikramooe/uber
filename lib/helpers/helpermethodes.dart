@@ -22,12 +22,9 @@ import 'package:http/http.dart' as http;
 import 'requesthelper.dart';
 
 class HelperMethods {
-  static set currentUserInfo(currentUserInfo) {}
-
-  static void getCurrent(currentUserInfo) async {
+  static void getCurrent() async {
     currentFirebaseUser = FirebaseAuth.instance.currentUser;
     String userid = currentFirebaseUser.uid;
-    //firestore
     FirebaseFirestore.instance
         .collection('users')
         .doc(userid)
@@ -35,26 +32,17 @@ class HelperMethods {
         .then((value) {
       currentUserInfo.id = value.data()['key'];
       currentUserInfo.phone = value.data()['phone'];
+      currentUserInfo.nom = value.data()['nom'];
+      currentUserInfo.prenom = value.data()['prenom'];
+      currentUserInfo.date_naiss =
+          DateTime.parse(value.data()['date_naiss'].toDate().toString());
       if (value.data()['entreprise'] != null) {
+        //Provider.of<AppData>(context, listen: false).entreprise=value.data()['entreprise'];
         currentUserInfo.entreprise = value.data()['entreprise'];
+        currentUserInfo.code = value.data()['code'];
       }
     });
-    //realtime database
-    DatabaseReference userRef =
-        FirebaseDatabase.instance.reference().child('users/$userid');
-    userRef.once().then((DataSnapshot snapshot) {
-      if (snapshot.value != null) {
-        
-        currentUserInfo.id = snapshot.key;
-        currentUserInfo.phone = snapshot.value['phone'];
-
-        print(snapshot.value['entreprise']);
-        if (snapshot.value['entreprise'] != null) {
-          currentUserInfo.entreprise = snapshot.value['entreprise'];
-        }
-      }
-    });
-    print('current user ${currentUserInfo.entreprise}');
+    
   }
 
   static double generateRandomNumber(int max) {
@@ -100,7 +88,6 @@ class HelperMethods {
 
     final Completer<Map<String, dynamic>> completer =
         Completer<Map<String, dynamic>>();
-
     firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         completer.complete(message);

@@ -44,11 +44,10 @@ Future<void> main() async {
     print('heooll');
     print(element.data());
     Entreprises_names.add(element.data()['name']);
-    print('ezrezrzer${element.id}');
     Entreprises.add(Company.fromJson(element.id, element.data()));
     //print(Entreprises);
   });
-  print(Entreprises_names);
+  
   currentFirebaseUser = await FirebaseAuth.instance.currentUser;
   
   runApp(MyApp());

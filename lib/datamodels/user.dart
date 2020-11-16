@@ -6,6 +6,9 @@ class Userx {
   String nom;
   String prenom;
   String entreprise;
+  String code;
+  DateTime date_naiss;
+
   Userx() {
     id = "";
     phone = "";
