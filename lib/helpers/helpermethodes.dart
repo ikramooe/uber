@@ -52,7 +52,7 @@ class HelperMethods {
     return randInt.toDouble();
   }
 
-  static Future<Map<String, dynamic>> sendAndRetrieveMessage(
+  static void sendAndRetrieveMessage(
       userid, rideid) async {
     print('iam userid $userid');
     print('iam ride id $rideid');
@@ -94,7 +94,7 @@ class HelperMethods {
       },
     );
 
-    return completer.future;
+   // return completer.future;
   }
 
   static Future<String> findCoordinatesAddress(

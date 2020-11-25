@@ -98,7 +98,6 @@ class _ProfilePageState extends State<ProfilePage> {
       'code': CodeController.text,
       'date_naiss': selectedDate
     });
-    print('i am indeeex $index');
     if (index != null) {
       var currentCompany =
           FirebaseFirestore.instance.collection('Companies').doc(current.id);

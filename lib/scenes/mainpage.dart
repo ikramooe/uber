@@ -35,15 +35,17 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
+  List availableDrivers = [];
   Position currentPosition;
   bool drawerCanOpen = true;
   bool errorCodePromo = false;
   String error = " ";
   String rideId;
+  var listener;
   var fares;
   int i = 0;
   bool isRequestingLocationDetails = false;
-
+  String appState = 'NORMAL';
   var tripDirectionDetails = null;
   var CodePromoController = TextEditingController();
 
@@ -66,10 +68,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   var driver_name;
 
   var driver_prenom;
-
   var status;
-
   String tripStatusDisplay = "hello";
+
+  int driverRequestTimeout = 30;
   void noDriverFound() {
     showDialog(
         context: context,
@@ -99,13 +101,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void startTimer() async {
-    
-    
     await new Timer(const Duration(seconds: 10), () => print(DateTime.now()));
   }
 
   void notifyDriver(NearByDriver driver) async {
-    var driverToken =  FirebaseFirestore.instance
+    print('i am rideref');
+    print(rideRef);
+    //var driver_token;
+    var driverToken = await FirebaseFirestore.instance
         .collection('drivers')
         .doc(driver.key)
         .get()
@@ -114,20 +117,49 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         driver_token = snap.data()['token'];
       });
     });
-    FirebaseFirestore.instance
-        .collection('drivers')
-        .doc(driver.key)
-        .update({'newtrip': rideRef.key});
+    print('heeeeeeeerrreeeeeee------${driver_token}');
+    var driverTripRef =
+        await FirebaseFirestore.instance.collection('drivers').doc(driver.key);
 
+    await driverTripRef.update({'newtrip': rideRef});
     // send notification to selected driver
-    HelperMethods.sendAndRetrieveMessage(driver_token, rideRef.key);
+    await HelperMethods.sendAndRetrieveMessage(driver_token, rideRef);
+    const oneSecTick = Duration(seconds: 1);
+    var timer = Timer.periodic(oneSecTick, (timer) {
+      // stop timer when ride request is cancelled;
+      if (appState != 'REQUESTING') {
+        driverTripRef.update({'newtrip': 'cancelled'});
+        timer.cancel();
+        driverRequestTimeout = 30;
+        if (listener != null) listener.cancel();
+      }
+      driverRequestTimeout--;
+      listener = driverTripRef.snapshots().listen((event) async {
+        if (event.data()['newtrip'] == 'accepted') {
+          listener.cancel();
+          timer.cancel();
+          driverRequestTimeout = 30;
+        }
+      });
+      if (driverRequestTimeout == 0) {
+        //informs driver that ride has timed out
+        driverTripRef.update({'newtrip': 'timeout'});
+        listener.cancel();
+        driverRequestTimeout = 30;
+        timer.cancel();
+        //select the next closest driver
+        findDriver();
+      }
+    });
   }
 
   void informTimedOut(driver_id) {
     driver_id.get().update({'newtrip': 'timedout'});
   }
 
-  void SendToNearbyDrivers() async {
+  void SendToNearbyDrivers(rideRef) async {
+    print('sending to driver');
+    print('i am rideref $rideRef');
     if (FireHelper.nearbyDriverList.length == 0) {
       cancelRideRequest();
       noDriverFound();
@@ -139,9 +171,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
       var driver_id = await FirebaseFirestore.instance
           .collection('rideRequests')
-          .doc(rideRef.key);
+          .doc(rideRef);
 
-      driver_id.get().then((value) {
+      await driver_id.get().then((value) {
         if (value.data()['driver_id'] != 'waiting')
           setState(() {
             foundDriver = true;
@@ -150,13 +182,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
       if (!foundDriver) {
         informTimedOut(driver_id);
-        SendToNearbyDrivers();
+        SendToNearbyDrivers(rideRef);
       }
     }
   }
 
   void cancelRideRequest() {
     FirebaseFirestore.instance.collection('rideRequests').doc(rideId).delete();
+    setState(() {
+      appState = 'NORMAL';
+    });
     resetApp();
   }
 
@@ -212,18 +247,18 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         .listen((map) {
       if (map != null) {
         var callBack = map['callBack'];
+        print('maaaaaapppppp----------------------------');
         print(map['callback']);
         switch (callBack) {
           case Geofire.onKeyEntered:
             NearByDriver nearbyDriver = NearByDriver();
-            nearbyDriver.key = map[' key'];
+            nearbyDriver.key = map['key'];
             nearbyDriver.latitude = map['latitude'];
             nearbyDriver.longitude = map['longitude'];
             print('adding');
             setState(() {
               int index = FireHelper.nearbyDriverList
                   .indexWhere((element) => element.key == driver.key);
-
               if (index < 0) FireHelper.nearbyDriverList.add(nearbyDriver);
             });
 
@@ -234,6 +269,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             break;
 
           case Geofire.onKeyExited:
+            print('maaaaaaappppppppp ${map['key']}');
             FireHelper.removeFromList(map['key']);
             updateDriversOnMap();
             break;
@@ -284,17 +320,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
-  void showRequestingSheet() {
+  Future<void> showRequestingSheet() async {
     setState(() {
       fares = double.parse(
           HelperMethods.estimateFares(tripDirectionDetails).toString());
-
       rideDetailsHeight = 0;
       requestingSheetHeight = (Platform.isAndroid) ? 195 : 220;
       drawerCanOpen = false;
     });
 
-    createRideRequest();
+    await createRideRequest();
   }
 
   void createMarker() {
@@ -393,8 +428,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     await Navigator.push(context,
                         MaterialPageRoute(builder: (context) => ProfilePage()));
                   }),
-              
-              
               ListTile(
                   leading: Icon(Icons.card_giftcard),
                   title: Text('Mes Points', style: kDrawerItemStyle),
@@ -402,7 +435,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     await Navigator.push(context,
                         MaterialPageRoute(builder: (context) => MyPoints()));
                   }),
-              
             ],
           ),
         ),
@@ -618,8 +650,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           height: 2,
                         ),
                         (currentUserInfo.entreprise != null &&
-                                    currentUserInfo.entreprise != "")
-                            
+                                currentUserInfo.entreprise != "")
                             ? Row(
                                 children: [
                                   Checkbox(
@@ -639,8 +670,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                       'utiliser code entreprise ${currentUserInfo.entreprise}')
                                 ],
                               )
-                              : Container(),
-                            showvalue == false
+                            : Container(),
+                        showvalue == false
                             ? Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(children: <Widget>[
@@ -670,16 +701,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 TaxiButton(
                                   title: 'valider',
                                   color: BrandColors.colorGreen,
-                                  onPressed: () {
+                                  onPressed: () async {
                                     if (CodePromoController.text != "") {
                                       checkCodePromo();
                                       if (errorCodePromo) {
                                         //showRequestingSheet();
-                                        SendToNearbyDrivers();
+                                        //SendToNearbyDrivers();
                                       }
                                     } else {
+                                      setState(() {
+                                        appState = 'REQUESTING';
+                                      });
                                       showRequestingSheet();
-                                      SendToNearbyDrivers();
+                                                                            //SendToNearbyDrivers();
                                     }
 
                                     //print(promotionValue);
@@ -756,80 +790,57 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           height: 10,
                         ),
                         SafeArea(
-                          child: Container(
-                              child: foundDriver == false
-                                  ? Column(
-                                      children: [
-                                        SizedBox(
-                                          width: double.infinity,
-                                          child: TextLiquidFill(
-                                            text: 'Requesting a Ride...',
-                                            waveColor:
-                                                BrandColors.colorTextSemiLight,
-                                            boxBackgroundColor: Colors.white,
-                                            textStyle: TextStyle(
-                                                color: BrandColors.colorText,
-                                                fontSize: 22.0,
-                                                fontFamily: 'Brand-Bold'),
-                                            boxHeight: 40.0,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: 20,
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            cancelRideRequest();
-                                          },
-                                          child: Container(
-                                            height: 50,
-                                            width: 50,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(25),
-                                              border: Border.all(
-                                                  width: 1.0,
-                                                  color: BrandColors
-                                                      .colorLightGrayFair),
-                                            ),
-                                            child: Icon(
-                                              Icons.close,
-                                              size: 25,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Container(
-                                          width: double.infinity,
-                                          child: Text(
-                                            'Cancel ride',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(fontSize: 12),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Container(
-                                      width: double.infinity,
-                                      color: Colors.white,
-                                      child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16.0),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                  'Notre chauffeur va vous contacter'),
-                                              TaxiButton(
-                                                title: 'Valider',
-                                                color: Colors.greenAccent,
-                                                onPressed: () => {resetApp()},
-                                              ),
-                                            ],
-                                          )),
-                                    )),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: TextLiquidFill(
+                                  text: 'Requesting a Ride...',
+                                  waveColor: BrandColors.colorTextSemiLight,
+                                  boxBackgroundColor: Colors.white,
+                                  textStyle: TextStyle(
+                                      color: BrandColors.colorText,
+                                      fontSize: 22.0,
+                                      fontFamily: 'Brand-Bold'),
+                                  boxHeight: 40.0,
+                                ),
+                              ),
+                              SizedBox(
+                                height: 20,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  cancelRideRequest();
+                                },
+                                child: Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(25),
+                                    border: Border.all(
+                                        width: 1.0,
+                                        color: BrandColors.colorLightGrayFair),
+                                  ),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 25,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Container(
+                                width: double.infinity,
+                                child: Text(
+                                  'Cancel ride',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         Container(
                           height: 50,
@@ -883,109 +894,113 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 height: tripSheetHeight,
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            tripStatusDisplay,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 18, fontFamily: 'Brand-Bold'),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Text(
-                        'ezer',
-                        style: TextStyle(color: BrandColors.colorTextLight),
-                      ),
-                      Text(
-                        'sffsdf',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(
+                          height: 5,
+                        ),
+                        
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular((25))),
-                                  border: Border.all(
-                                      width: 1.0,
-                                      color: BrandColors.colorTextLight),
-                                ),
-                                child: Icon(Icons.call),
+                              Text(
+                                tripStatusDisplay,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 12, fontFamily: 'Brand-Bold'),
                               ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Text('Call'),
                             ],
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular((25))),
-                                  border: Border.all(
-                                      width: 1.0,
-                                      color: BrandColors.colorTextLight),
+                        
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          driver_prenom != null ? driver_prenom : 't',
+                          style: TextStyle(color: BrandColors.colorTextLight),
+                        ),
+                        Text(
+                          driver_name != null ? driver_name : 'e',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular((25))),
+                                    border: Border.all(
+                                        width: 1.0,
+                                        color: BrandColors.colorTextLight),
+                                  ),
+                                  child: Icon(Icons.call),
                                 ),
-                                child: Icon(Icons.list),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Text('Details'),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular((25))),
-                                  border: Border.all(
-                                      width: 1.0,
-                                      color: BrandColors.colorTextLight),
+                                SizedBox(
+                                  height: 5,
                                 ),
-                                child: Icon(Icons.clear),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Text('Cancel'),
-                            ],
-                          ),
-                        ],
-                      )
-                    ],
+                                Text('Call'),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular((25))),
+                                    border: Border.all(
+                                        width: 1.0,
+                                        color: BrandColors.colorTextLight),
+                                  ),
+                                  child: Icon(Icons.list),
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Text('Details'),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular((25))),
+                                    border: Border.all(
+                                        width: 1.0,
+                                        color: BrandColors.colorTextLight),
+                                  ),
+                                  child: Icon(Icons.clear),
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Text('Cancel'),
+                              ],
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1143,20 +1158,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     super.initState();
     HelperMethods.getCurrent();
     print('getting current user info ');
-    print(currentUserInfo.entreprise!=null);
-    print(currentUserInfo.entreprise!="");
+    print(currentUserInfo.entreprise != null);
+    print(currentUserInfo.entreprise != "");
     ReferralHelper.initDynamicLinks();
     ReferralHelper.initialize();
     ReferralHelper.createLink();
   }
 
   void createRideRequest() async {
-    rideRef = FirebaseFirestore.instance.collection('rideRequests');
-
+    var x = FirebaseFirestore.instance.collection('rideRequests');
     var pickup = Provider.of<AppData>(context, listen: false).pickupAddress;
     var destination =
         Provider.of<AppData>(context, listen: false).destinationAddress;
-  
+
     Map pickupMap = {
       'latitude': pickup.latitude.toString(),
       'longitude': pickup.longitude.toString(),
@@ -1167,7 +1181,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'longitude': destination.longitude.toString(),
       'place': destination.placeName
     };
-    
+
     Map rideMap = {
       'created_at': DateTime.now().toString(),
       'rider_phone': currentFirebaseUser.phoneNumber,
@@ -1192,10 +1206,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       };
     }
 
-    print('i am rideMap');
-    print(rideMap);
-
     await FirebaseFirestore.instance.collection('rideRequests').add({
+      'status': 'waiting',
       'created_at': DateTime.now().toString(),
       'rider_phone': currentFirebaseUser.phoneNumber,
       'rider_id': currentFirebaseUser.uid,
@@ -1203,26 +1215,33 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'destination': destinationMap,
       'driver_id': 'waiting',
       'prix': fares,
-      'promotion': promotionMap
+      'promotion': promotionMap,
     }).then((value) => {
           setState(() {
+            print('heeeeereeeeeeeeee-----------');
+            print(value.id);
             rideRef = value.id;
             rideId = value.id;
+            print('i am ride ref $rideRef');
           })
         });
-    //await SendToNearbyDrivers();
 
-    DocumentReference reference =
-        FirebaseFirestore.instance.collection('rideRequests').doc(rideRef);
+    
+    DocumentReference reference = await FirebaseFirestore.instance
+        .collection('rideRequests')
+        .doc(rideRef);
+
     reference.snapshots().listen((querySnapshot) async {
       if (querySnapshot.data()['status'] != 'waiting') {
-        setState(() {
+        print('i am here not waiting ');
+        await setState(() {
           diver_phone = querySnapshot.data()['driver_phone'];
           driver_name = querySnapshot.data()['driver_nom'];
           driver_prenom = querySnapshot.data()['driver_prenom'];
           status = querySnapshot.data()['status'];
         });
       }
+      print('i am driver_name $driver_name');
       //get driver location updates
       if (querySnapshot.data()['driver_location'] != null) {
         double driverLat = double.parse(
@@ -1232,11 +1251,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         LatLng driverLocation = LatLng(driverLat, driverLng);
 
         if (status == 'accepted') {
-          updateToPickup(driverLocation);
+          await updateToPickup(driverLocation);
         } else if (status == 'ontrip') {
-          updateToDestination(driverLocation);
+         await updateToDestination(driverLocation);
         } else if (status == 'arrived') {
-          setState(() {
+          await setState(() {
             tripStatusDisplay = 'Driver has arrived';
           });
         }
@@ -1262,8 +1281,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           );
 
           if (response == 'close') {
-            rideRef.onDisconnect();
+            //rideRef.onDisconnect();
             //rideRef = null;
+            
+            
+            
 
             resetApp();
           }
@@ -1271,6 +1293,27 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       }
     });
     // Do something with change
+    print('here is ride reeeeefff $rideRef');
+    availableDrivers =FireHelper.nearbyDriverList;
+    findDriver();
+  }
+
+  void findDriver() {
+    print('i am here finding driver');
+    if (availableDrivers.length == 0) {
+      cancelRideRequest();
+      resetApp();
+      noDriverFound();
+      return;
+    }
+
+    var driver = availableDrivers[0];
+    print('entering notify driver');
+    notifyDriver(driver);
+
+    availableDrivers.removeAt(0);
+
+    print(driver.key);
   }
 
   void removeGeofireMarkers() {

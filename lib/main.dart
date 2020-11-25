@@ -41,8 +41,6 @@ Future<void> main() async {
       await FirebaseFirestore.instance.collection('Companies').get();
 
   companies.docs.forEach((element) {
-    print('heooll');
-    print(element.data());
     Entreprises_names.add(element.data()['name']);
     Entreprises.add(Company.fromJson(element.id, element.data()));
     //print(Entreprises);
