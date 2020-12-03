@@ -41,7 +41,7 @@ Future<void> main() async {
       await FirebaseFirestore.instance.collection('Companies').get();
 
   companies.docs.forEach((element) {
-    Entreprises_names.add(element.data()['name']);
+    Entreprises_names.add(element.data()['code']);
     Entreprises.add(Company.fromJson(element.id, element.data()));
     //print(Entreprises);
   });
@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         theme: ThemeData(fontFamily: 'Brand-Regular'),
         initialRoute:  
-         currentFirebaseUser ==null ?   RegisterPage.id :MainPage.id,  
+         currentFirebaseUser ==null ? RegisterPage.id :MainPage.id,  
           
         routes: {
           RegisterPage.id: (context) => RegisterPage(),

@@ -96,7 +96,7 @@ class _RegisterPageState extends State<RegisterPage> {
     NameController.text == "" ? validNom = false : validNom = true;
     PrenomController.text == "" ? validPrenom = false : validPrenom = true;
     if (PhoneController.text == "") {
-      showToast('phone number is required', gravity: Toast.TOP);
+      showToast('le numéro de téléphone est requis', gravity: Toast.TOP);
     }
     if (!validNom || !validPrenom || PhoneController.text == "") return;
     var verifyPhoneNumber = await FirebaseAuth.instance.verifyPhoneNumber(
@@ -108,7 +108,7 @@ class _RegisterPageState extends State<RegisterPage> {
       // verification failed
       verificationFailed: (FirebaseAuthException e) {
         if (e.code == 'invalid-phone-number') {
-          print('The provided phone number is not valid.');
+          print('Le numéro de téléphone fourni n\'est pas valide.');
         }
       },
       // sms sent
@@ -135,35 +135,20 @@ class _RegisterPageState extends State<RegisterPage> {
         print('User is currently signed out!');
       } else {
         //save user information to database
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-          'nom': NameController.text,
-          'prenom': PrenomController.text,
-          'entreprise': company_name,
-          'code': CodeController.text
-        });
-
-        if (index != null) {
-          var currentCompany = await FirebaseFirestore.instance
-              .collection('Companies')
-              .doc(current.id);
-
-          Map usersCode = {
-            'user': user.uid,
-            'code': CodeController.text,
-          };
-          current.codes.removeAt(index);
-          current.codes.add(usersCode);
-
-          currentCompany.set({'codes': current.codes, 'name': current.name});
-
-          FirebaseFirestore.instance
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+        if (doc.exists) {  
+          await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
-              .update(
-                  {'entreprise': company_name, 'code': CodeController.text});
+              .update({'phone': user.phoneNumber});
+        } else {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({'phone': user.phoneNumber});
         }
         Navigator.pushNamedAndRemoveUntil(
             context, MainPage.id, (route) => false);
@@ -178,7 +163,7 @@ class _RegisterPageState extends State<RegisterPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return new AlertDialog(
-            title: Text('votre code '),
+            title: Text('votre code'),
             content: Padding(
               padding: const EdgeInsets.all(8.0),
               // pin input
@@ -192,7 +177,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   _signIn(pin.code);
                 },
                 child: Text(
-                  'Submit',
+                  'Valider',
                 ),
               ),
             ],
@@ -202,7 +187,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: BrandColors.colorGreyclair,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -212,13 +197,11 @@ class _RegisterPageState extends State<RegisterPage> {
                 SizedBox(height: 45),
                 Image(
                   alignment: Alignment.center,
-                  height: 100,
-                  width: 100,
+                  height: 150,
+                  width: 150,
                   image: AssetImage("images/logo.png"),
                 ),
-                SizedBox(
-                  height: 10,
-                ),
+                
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(children: <Widget>[
@@ -227,12 +210,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
                           errorText: validNom == false
-                              ? 'Value Can\'t Be Empty'
+                              ? 'Nom ne peut pas etre vide'
                               : null,
                           labelText: 'Nom',
                           labelStyle: TextStyle(fontSize: 14.0),
                           hintStyle: TextStyle(
-                            color: Colors.grey,
+                            color: Colors.white,
                           )),
                       style: TextStyle(fontSize: 14),
                     ),
@@ -241,12 +224,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
                           errorText: validPrenom == false
-                              ? 'Value Can\'t Be Empty'
+                              ? 'Prenom ne peut pas etre vide'
                               : null,
                           labelText: 'Prenom',
                           labelStyle: TextStyle(fontSize: 14.0),
                           hintStyle: TextStyle(
-                            color: Colors.grey,
+                            color: Colors.white,
                           )),
                       style: TextStyle(fontSize: 14),
                     ),
@@ -260,50 +243,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       showCountryFlags: true,
                     ),
                     SizedBox(height: 10),
-                    DropdownButton<String>(
-                      isExpanded: true,
-                      isDense: false,
-                      value: company_name,
-                      style: TextStyle(color: Colors.deepPurple),
-                      underline: Container(
-                        height: 0,
-                      ),
-                      onChanged: (String newValue) {
-                        setState(() {
-                          company_name = newValue;
-                        });
-                      },
-                      items: Entreprises_names.map<DropdownMenuItem<String>>(
-                          (item) {
-                        return DropdownMenuItem<String>(
-                          child: new Text(item),
-                          value: item.toString(),
-                        );
-                      }).toList(),
-                    ),
-                    company_name != ' '
-                        ? TextField(
-                            controller: CodeController,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                                labelText: 'votre code',
-                                labelStyle: TextStyle(fontSize: 14.0),
-                                errorStyle: TextStyle(),
-                                errorText: errorText,
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                )),
-                            style: TextStyle(fontSize: 14),
-                          )
-                        : Container(),
-                    SizedBox(
-                      height: 20,
-                    ),
                     TaxiButton(
                         title: 'S\'inscrire',
-                        color: BrandColors.colorGreen,
+                        color: BrandColors.colorOrangeclair,
                         onPressed: () {
-                          checkCodeCompany();
+                          RegisterUser(null);
                         }),
                   ]),
                 ),
@@ -312,7 +256,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       Navigator.pushNamedAndRemoveUntil(
                           context, LoginPage.id, (route) => false);
                     },
-                    child: Text('Already Have an account , login here'))
+                    child: Text('Vous avez déjà un compte ? Connectez-vous ici'))
               ],
             ),
           ),

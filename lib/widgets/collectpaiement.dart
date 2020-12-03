@@ -7,7 +7,7 @@ import 'branddivider.dart';
 class CollectPayment extends StatelessWidget {
 
   final String paymentMethod;
-  final int fares;
+  final String fares;
 
   CollectPayment({this.paymentMethod, this.fares});
   

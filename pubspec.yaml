@@ -51,6 +51,8 @@ dependencies:
   share: ^0.6.5+3
   flutter_automation: ^1.4.0
   toast: ^0.1.5
+  flutter_launcher_icons: ^0.8.1
+  url_launcher: ^5.7.5
   
 dev_dependencies:
   flutter_test:
@@ -60,6 +62,13 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
+flutter_icons:
+  ios: true
+  android: true
+  image_path_ios: "images/logo.png"
+  image_path_android: "images/logo.png"
+  adaptive_icon_background: "images/Solidblack.png"
+
 flutter:
 
   # The following line ensures that the Material Icons font is

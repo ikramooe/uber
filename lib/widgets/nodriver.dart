@@ -26,13 +26,13 @@ class NoDriverDialog extends StatelessWidget {
               children: [
                 SizedBox(height: 10,),
 
-                Text('No driver found', style: TextStyle(fontSize: 22.0, fontFamily: 'Brand-Bold'),),
+                Text('Aucun Chauffeur n\'a été trouvé  ', style: TextStyle(fontSize: 22.0, fontFamily: 'Brand-Bold'),),
 
                 SizedBox(height: 25,),
 
                 Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: Text('No available driver close by, we suggest you try again shortly', textAlign: TextAlign.center,),
+                  child: Text('Aucun chauffeur disponible à proximité, nous vous suggérons de réessayer ultérieurement', textAlign: TextAlign.center,),
                 ),
 
                 SizedBox(height: 30,),
@@ -40,7 +40,7 @@ class NoDriverDialog extends StatelessWidget {
                 Container(
                   width: 200,
                   child: TaxiOutlineButton(
-                    title: 'CLOSE',
+                    title: 'FERMER',
                     color: BrandColors.colorLightGrayFair,
                     onPressed: (){
                       Navigator.pop(context);

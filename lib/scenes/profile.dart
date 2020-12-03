@@ -50,38 +50,40 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void checkCodeCompany() async {
     checkCode = false;
-    if (CodeController.text != currentUserInfo.code) if (company_name != "" &&
+    if (CodeController.text != currentUserInfo.code) if (
         CodeController.text != "") {
-      index = Entreprises_names.indexOf(company_name);
-      current = Entreprises.elementAt(index - 1);
-      print('i am current codes ');
-      print(CodeController.text);
-      for (Map element in current.codes) {
-        print('i am element');
-        print(element['code']);
-        if (element['code'] == CodeController.text && element['user'] == "") {
-          setState(() {
-            checkCode = true;
-            index = current.codes.indexOf(element);
-          });
-          break;
-        }
+      //AllMovies.where((i) => i.isAnimated).toList();
+      index = Entreprises_names.indexOf(CodeController.text);
+      if(index>0){
+           current = Entreprises.elementAt(index - 1);
+           for (Map element in current.codes) {
+                
+                if (element['code'] == PhoneController.text) {
+                  setState(() {
+                    checkCode = true;
+                    index = current.codes.indexOf(element);
+                  });
+                  break;
+                }
+            }
       }
-      if (checkCode == false)
-        setState(() {
-          errorText = 'non valide';
-        });
-      else {
-        setState(() {
-          errorText = '';
-        });
-        updateUser(index);
+       if (checkCode == false)
+              setState(() {
+                errorText = 'non valide';
+              });
+            else {
+              setState(() {
+                errorText = '';
+              });
+              updateUser(index);
+            }
+              } else
+                updateUser(index);
+              else
+                updateUser(null);
       }
-    } else
-      updateUser(index);
-    else
-      updateUser(null);
-  }
+      
+      
 
   void showToast(String msg, {int duration, int gravity}) {
     Toast.show(msg, context, duration: duration, gravity: gravity);
@@ -305,48 +307,25 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(height: 10),
                   Text(
                       'si vous faites partie d\'une entreprise introduisez votre code'),
-                  DropdownButton<String>(
-                    isExpanded: true,
-                    isDense: false,
-                    value: company_name,
-                    style: TextStyle(color: Colors.deepPurple),
-                    underline: Container(
-                      height: 0,
-                    ),
-                    onChanged: (String newValue) {
-                      setState(() {
-                        company_name = newValue;
-                      });
-                    },
-                    items:
-                        Entreprises_names.map<DropdownMenuItem<String>>((item) {
-                      return DropdownMenuItem<String>(
-                        child: new Text(item),
-                        value: item.toString(),
-                      );
-                    }).toList(),
+                  TextField(
+                    controller: CodeController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                        labelText: 'votre code',
+                        labelStyle: TextStyle(fontSize: 14.0),
+                        errorStyle: TextStyle(),
+                        errorText: errorText,
+                        hintStyle: TextStyle(
+                          color: Colors.grey,
+                        )),
+                    style: TextStyle(fontSize: 14),
                   ),
-                  company_name != ' '
-                      ? TextField(
-                          controller: CodeController,
-                          keyboardType: TextInputType.text,
-                          decoration: InputDecoration(
-                              labelText: 'votre code',
-                              labelStyle: TextStyle(fontSize: 14.0),
-                              errorStyle: TextStyle(),
-                              errorText: errorText,
-                              hintStyle: TextStyle(
-                                color: Colors.grey,
-                              )),
-                          style: TextStyle(fontSize: 14),
-                        )
-                      : Container(),
                   SizedBox(
                     height: 20,
                   ),
                   TaxiButton(
                       title: 'Modifier',
-                      color: BrandColors.colorGreen,
+                      color: BrandColors.colorGrey,
                       onPressed: () {
                         checkCodeCompany();
                       }),

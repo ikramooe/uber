@@ -39,10 +39,10 @@ class HelperMethods {
       if (value.data()['entreprise'] != null) {
         //Provider.of<AppData>(context, listen: false).entreprise=value.data()['entreprise'];
         currentUserInfo.entreprise = value.data()['entreprise'];
-        currentUserInfo.code = value.data()['code'];
-      }
+        //currentUserInfo.code = value.data()['code'];
+      } else
+        currentUserInfo.entreprise = "AUCUNE";
     });
-    
   }
 
   static double generateRandomNumber(int max) {
@@ -52,8 +52,7 @@ class HelperMethods {
     return randInt.toDouble();
   }
 
-  static void sendAndRetrieveMessage(
-      userid, rideid) async {
+  static void sendAndRetrieveMessage(userid, rideid) async {
     print('iam userid $userid');
     print('iam ride id $rideid');
 
@@ -94,7 +93,7 @@ class HelperMethods {
       },
     );
 
-   // return completer.future;
+    // return completer.future;
   }
 
   static Future<String> findCoordinatesAddress(
