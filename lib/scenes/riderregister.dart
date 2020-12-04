@@ -148,7 +148,7 @@ class _RegisterPageState extends State<RegisterPage> {
           await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
-              .set({'phone': user.phoneNumber});
+              .set({'phone': user.phoneNumber,'nom':NameController.text,'prenom':PrenomController.text,'trips':[]});
         }
         Navigator.pushNamedAndRemoveUntil(
             context, MainPage.id, (route) => false);

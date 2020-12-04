@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:international_phone_input/international_phone_input.dart';
 import 'package:tProject/datamodels/company.dart';
+import 'package:tProject/helpers/helpermethodes.dart';
 import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/widgets/taxibutton.dart';
 import 'package:toast/toast.dart';
@@ -50,40 +51,39 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void checkCodeCompany() async {
     checkCode = false;
-    if (CodeController.text != currentUserInfo.code) if (
-        CodeController.text != "") {
+    if (CodeController.text != currentUserInfo.code) if (CodeController.text !=
+        "") {
       //AllMovies.where((i) => i.isAnimated).toList();
       index = Entreprises_names.indexOf(CodeController.text);
-      if(index>0){
-           current = Entreprises.elementAt(index - 1);
-           for (Map element in current.codes) {
-                
-                if (element['code'] == PhoneController.text) {
-                  setState(() {
-                    checkCode = true;
-                    index = current.codes.indexOf(element);
-                  });
-                  break;
-                }
-            }
+      print('i am index $index');
+      if (index >= 0) {
+        current = Entreprises.elementAt(index);
+        for (Map element in current.codes) {
+          print(current.codes);
+          if (element['code'] == PhoneController.text) {
+            setState(() {
+              checkCode = true;
+              index = current.codes.indexOf(element);
+            });
+            break;
+          }
+        }
       }
-       if (checkCode == false)
-              setState(() {
-                errorText = 'non valide';
-              });
-            else {
-              setState(() {
-                errorText = '';
-              });
-              updateUser(index);
-            }
-              } else
-                updateUser(index);
-              else
-                updateUser(null);
+      if (checkCode == false)
+        setState(() {
+          errorText = 'non valide';
+        });
+      else {
+        setState(() {
+          errorText = '';
+        });
+        updateUser(index);
       }
-      
-      
+    } else
+      updateUser(index);
+    else
+      updateUser(null);
+  }
 
   void showToast(String msg, {int duration, int gravity}) {
     Toast.show(msg, context, duration: duration, gravity: gravity);
@@ -96,8 +96,7 @@ class _ProfilePageState extends State<ProfilePage> {
         .update({
       'nom': NameController.text,
       'prenom': PrenomController.text,
-      'entreprise': company_name,
-      'code': CodeController.text,
+      'entreprise': CodeController.text,
       'date_naiss': selectedDate
     });
     if (index != null) {
@@ -105,16 +104,13 @@ class _ProfilePageState extends State<ProfilePage> {
           FirebaseFirestore.instance.collection('Companies').doc(current.id);
       Map usersCode = {
         'user': currentFirebaseUser.uid,
-        'code': CodeController.text,
+        'phone': PhoneController.text,
       };
       current.codes.removeAt(index);
       current.codes.add(usersCode);
       currentCompany.update({'codes': current.codes});
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentFirebaseUser.uid)
-          .update({'entreprise': company_name, 'code': CodeController.text});
     }
+    showToast('Profile modifié avec succés');
     Navigator.pushNamedAndRemoveUntil(context, MainPage.id, (route) => false);
   }
 
@@ -185,9 +181,8 @@ class _ProfilePageState extends State<ProfilePage> {
     NameController.text = currentUserInfo.nom;
     PrenomController.text = currentUserInfo.prenom;
     PhoneController.text = currentUserInfo.phone;
-    if (currentUserInfo.entreprise != null && currentUserInfo.code != "") {
-      company_name = currentUserInfo.entreprise;
-      CodeController.text = currentUserInfo.code;
+    if (currentUserInfo.entreprise != "AUCUNE") {
+      CodeController.text = currentUserInfo.entreprise;
     }
     if (currentUserInfo.date_naiss != null)
       selectedDate = currentUserInfo.date_naiss;

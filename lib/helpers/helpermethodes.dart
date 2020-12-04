@@ -34,6 +34,8 @@ class HelperMethods {
       currentUserInfo.phone = value.data()['phone'];
       currentUserInfo.nom = value.data()['nom'];
       currentUserInfo.prenom = value.data()['prenom'];
+      currentUserInfo.trips = value.data()['trips'];
+
       currentUserInfo.date_naiss =
           DateTime.parse(value.data()['date_naiss'].toDate().toString());
       if (value.data()['entreprise'] != null) {

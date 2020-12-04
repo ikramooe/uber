@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/helpers/referralhelper.dart';
+import 'package:tProject/scenes/historypage.dart';
 import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/riderphone.dart';
@@ -36,7 +37,7 @@ Future<void> main() async {
             databaseURL: 'https://ziouan-vite-vite.firebaseio.com',
           ),
   );
-  
+
   var companies =
       await FirebaseFirestore.instance.collection('Companies').get();
 
@@ -45,9 +46,9 @@ Future<void> main() async {
     Entreprises.add(Company.fromJson(element.id, element.data()));
     //print(Entreprises);
   });
-  
+  print(Entreprises_names);
   currentFirebaseUser = await FirebaseAuth.instance.currentUser;
-  
+
   runApp(MyApp());
 }
 
@@ -58,11 +59,11 @@ class MyApp extends StatelessWidget {
       create: (context) => AppData(),
       child: MaterialApp(
         theme: ThemeData(fontFamily: 'Brand-Regular'),
-        initialRoute:  
-         currentFirebaseUser ==null ? RegisterPage.id :MainPage.id,  
-          
+        initialRoute:
+            currentFirebaseUser == null ? RegisterPage.id : MainPage.id,
         routes: {
           RegisterPage.id: (context) => RegisterPage(),
+          HistoryPage.id: (context) => HistoryPage(),
           LoginPage.id: (context) => LoginPage(),
           MainPage.id: (context) => MainPage(),
           PhoneRegisterPage.id: (context) => PhoneRegisterPage()

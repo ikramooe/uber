@@ -8,6 +8,7 @@ class Userx {
   String entreprise;
   String code;
   DateTime date_naiss;
+  List trips;
 
   Userx() {
     id = "";

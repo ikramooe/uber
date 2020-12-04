@@ -18,6 +18,7 @@ import 'package:tProject/datamodels/nearbydriver.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/helpers/firehelper.dart';
 import 'package:tProject/helpers/referralhelper.dart';
+import 'package:tProject/scenes/historypage.dart';
 import 'package:tProject/scenes/points.dart';
 import 'package:tProject/scenes/profile.dart';
 import 'package:tProject/scenes/riderlogin.dart';
@@ -150,6 +151,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           listener.cancel();
           timer.cancel();
           driverRequestTimeout = 30;
+        }
+        if (event.data()['newtrip'] == 'declined') {
+          listener.cancel();
+          timer.cancel();
+          driverRequestTimeout = 0;
         }
       });
       if (driverRequestTimeout == 0) {
@@ -462,17 +468,17 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 builder: (context) => MyPoints()));
                       }),
                   ListTile(
-                      leading: Icon(Icons.card_giftcard, color: Colors.white),
+                      leading: Icon(Icons.history, color: Colors.white),
                       title: Text('Histaurique', style: kDrawerItemStyle),
                       onTap: () async {
-                        /*
+                        
                         await Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => MyPoints())); */
+                                builder: (context) => HistoryPage())); 
                       }),
                   ListTile(
-                      leading: Icon(Icons.card_giftcard, color: Colors.white),
+                      leading: Icon(Icons.headset, color: Colors.white),
                       title: Text('Support', style: kDrawerItemStyle),
                       onTap: () async {
                         /*
@@ -483,7 +489,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 */
                       }),
                   ListTile(
-                      leading: Icon(Icons.card_giftcard, color: Colors.white),
+                      leading: Icon(Icons.all_out, color: Colors.white),
                       title: Text('Deconnecter', style: kDrawerItemStyle),
                       onTap: () async {
                         await FirebaseAuth.instance.signOut();
@@ -736,8 +742,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         SizedBox(
                           height: 2,
                         ),
-                        (currentUserInfo.entreprise != null &&
-                                currentUserInfo.entreprise != "AUCUNE")
+                        (currentUserInfo.entreprise != "AUCUNE")
                             ? Row(
                                 children: [
                                   Checkbox(
@@ -882,7 +887,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               SizedBox(
                                 width: double.infinity,
                                 child: TextLiquidFill(
-                                  text: 'Requesting a Ride...',
+                                  text: 'Recherche de Chauffeur...',
                                   waveColor: BrandColors.colorTextSemiLight,
                                   boxBackgroundColor: Colors.white,
                                   textStyle: TextStyle(
@@ -921,7 +926,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                               Container(
                                 width: double.infinity,
                                 child: Text(
-                                  'Cancel ride',
+                                  'Annuler',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(fontSize: 12),
                                 ),
@@ -1005,17 +1010,17 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         Row(
                           children: [
                             Text(
-                          driver_prenom != null ? driver_prenom : 't',
-                          style: TextStyle(color: BrandColors.colorTextLight),
-                        ),
-                        SizedBox(width:20),
-                        Text(
-                          driver_name != null ? driver_name : 'e',
-                          style: TextStyle(fontSize: 20),
-                        ),
+                              driver_prenom != null ? driver_prenom : 't',
+                              style:
+                                  TextStyle(color: BrandColors.colorTextLight),
+                            ),
+                            SizedBox(width: 20),
+                            Text(
+                              driver_name != null ? driver_name : 'e',
+                              style: TextStyle(fontSize: 20),
+                            ),
                           ],
                         ),
-                        
                         SizedBox(
                           height: 20,
                         ),
@@ -1089,7 +1094,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 SizedBox(
                                   height: 10,
                                 ),
-                                Text('Cancel'),
+                                Text('Annuler'),
                               ],
                             ),
                           ],
@@ -1253,7 +1258,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     super.initState();
     HelperMethods.getCurrent();
     print('getting current user info ');
-    print(currentUserInfo.entreprise != null);
+    print(currentUserInfo.entreprise);
     print(currentUserInfo.entreprise != "");
     ReferralHelper.initDynamicLinks();
     ReferralHelper.initialize();
@@ -1286,7 +1291,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'driver_id': 'waiting',
       'prix': fares
     };
-
+    currentUserInfo.trips.add(rideMap);
     Map promotionMap = {'codePromo': '', 'promotion': ''};
     if (promotionValue != null) {
       promotionMap = {
@@ -1333,6 +1338,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           driver_name = querySnapshot.data()['driver_name'];
           driver_prenom = querySnapshot.data()['driver_prenom'];
           status = querySnapshot.data()['status'];
+          currentUserInfo.trips[-1]['driver_phone'] = diver_phone;
+          currentUserInfo.trips[-1]['driver_name'] = driver_name;
+          currentUserInfo.trips[-1]['driver_prenom'] = driver_prenom;
+          currentUserInfo.trips[-1]['requestRef'] = rideRef;
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentFirebaseUser.uid)
+              .update({'trips': currentUserInfo.trips});
         });
       }
       print('i am driver_name $driver_name');
@@ -1348,7 +1361,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         if (querySnapshot.data()['status'] == 'accepted') {
           await updateToPickup(driverLocation);
         } else if (querySnapshot.data()['status'] == 'ontrip') {
-          print('i am here onnnn triiiiiiippppppp');
           await updateToDestination(driverLocation);
         } else if (querySnapshot.data()['status'] == 'arrived') {
           await setState(() {
