@@ -27,6 +27,7 @@ import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
 import 'package:tProject/widgets/collectpaiement.dart';
 import 'package:tProject/widgets/nodriver.dart';
+import 'package:tProject/widgets/rating.dart';
 import 'package:tProject/widgets/taxibutton.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../globals.dart';
@@ -1390,8 +1391,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           );
 
           if (response == 'close') {
-            //rideRef.onDisconnect();
-            //rideRef = null;
+            var response2 = await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) => Rating(ref:rideRef
+              
+            ),
+          );
+          if(response2=='close')
             resetApp();
           }
         }

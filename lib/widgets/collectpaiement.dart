@@ -32,7 +32,7 @@ class CollectPayment extends StatelessWidget {
 
             SizedBox(height: 20,),
 
-            Text('PAYMENT'),
+            Text('PAIEMENT'),
 
             SizedBox(height: 20,),
 
@@ -40,13 +40,13 @@ class CollectPayment extends StatelessWidget {
 
             SizedBox(height: 16.0,),
 
-            Text('\$$fares', style: TextStyle(fontFamily: 'Brand-Bold', fontSize: 50),),
+            Text('$fares DZD', style: TextStyle(fontFamily: 'Brand-Bold', fontSize: 50),),
 
             SizedBox(height: 16,),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text('Amount above is the total fares to be charged to the rider', textAlign: TextAlign.center,),
+              child: Text('Le montant ci-dessus correspond au total des tarifs à facturer au passager', textAlign: TextAlign.center,),
             ),
 
             SizedBox(height: 30,),

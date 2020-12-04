@@ -42,6 +42,7 @@ dependencies:
   connectivity: ^0.4.9+2
   provider: ^4.3.2+2
   progress_dialog: ^1.2.4
+  rating_dialog: ^1.0.0
   flutter_polyline_points: ^0.2.3
   flutter_geofire: ^1.0.3
   animated_text_kit: ^2.2.0

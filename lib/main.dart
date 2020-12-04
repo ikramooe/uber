@@ -6,7 +6,6 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tProject/helpers/referralhelper.dart';
 import 'package:tProject/scenes/historypage.dart';
 import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';

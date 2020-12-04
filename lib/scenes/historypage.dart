@@ -34,7 +34,7 @@ class _HistoryPageState extends State<HistoryPage> {
         itemBuilder: (context, index) {
           return HistoryTile(
             history:
-                currentUserInfo.trips[index],
+                currentUserInfo.trips[index]
           );
         },
         separatorBuilder: (BuildContext context, int index) => BrandDivider(),
