@@ -1,11 +1,11 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:international_phone_input/international_phone_input.dart';
+import 'package:sms_consent/sms_consent.dart';
 import 'package:tProject/datamodels/company.dart';
+
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/widgets/taxibutton.dart';
@@ -30,23 +30,29 @@ class _RegisterPageState extends State<RegisterPage> {
   var PhoneController = TextEditingController();
 
   var CodeController = TextEditingController();
+var _codeController = TextEditingController();
 
   var company_name = Entreprises_names[0];
   Company current;
   String smsCode;
   String verificationCode;
   String otp = "";
+  String signature = "{{ app signature }}";
+  String otpCode = "";
+
 
   var errorText;
   bool checkCode = false;
   int index;
-
+  
   var phoneIsoCode;
 
   String phoneNumber;
 
   bool validNom = true;
   bool validPrenom = true;
+
+  String receivedCode="";
   void onPhoneNumberChange(
       String number, String internationalizedPhoneNumber, String isoCode) {
     setState(() {
@@ -62,7 +68,6 @@ class _RegisterPageState extends State<RegisterPage> {
       print(index);
       print(Entreprises.elementAt(index - 1));
       current = Entreprises.elementAt(index - 1);
-      //print(current.codes);
       for (Map element in current.codes) {
         if (element['code'] == CodeController.text) {
           setState(() {
@@ -100,7 +105,9 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     if (!validNom || !validPrenom || PhoneController.text == "") return;
     var verifyPhoneNumber = await FirebaseAuth.instance.verifyPhoneNumber(
+      
       phoneNumber: "+213" + PhoneController.text,
+      timeout: const Duration(seconds: 5),
       // successful verification
       verificationCompleted: (PhoneAuthCredential credential) {
         print("success");
@@ -112,13 +119,30 @@ class _RegisterPageState extends State<RegisterPage> {
         }
       },
       // sms sent
-      codeSent: (String verificationId, int resendToken) {
+      codeSent: (String verificationId, int resendToken) async {
         this.verificationCode = verificationId;
         print("code sent: " + verificationId);
         otpDialogBox(context).then((value) {});
+
+        try {
+          receivedCode = await SmsConsent.startSMSConsent();
+          setState(() {
+            otpCode = receivedCode;
+            _codeController.text = receivedCode;
+          });
+        } on PlatformException {
+          receivedCode = 'Failed to get the code.';
+        }
+        print(receivedCode);
       },
 
-      codeAutoRetrievalTimeout: (String verificationId) {},
+       
+
+      codeAutoRetrievalTimeout: (String verificationId) {
+        print(' auto retreival time out ');
+        this.verificationCode = verificationId;
+
+      },
     );
     await verifyPhoneNumber;
   }
@@ -136,10 +160,10 @@ class _RegisterPageState extends State<RegisterPage> {
       } else {
         //save user information to database
         DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-        if (doc.exists) {  
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (doc.exists) {
           await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
@@ -148,7 +172,13 @@ class _RegisterPageState extends State<RegisterPage> {
           await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
-              .set({'phone': user.phoneNumber,'nom':NameController.text,'prenom':PrenomController.text,'trips':[]});
+              .set({
+            'phone': user.phoneNumber,
+            'nom': NameController.text,
+            'prenom': PrenomController.text,
+            'trips': [],
+            'entreprise':""
+          });
         }
         Navigator.pushNamedAndRemoveUntil(
             context, MainPage.id, (route) => false);
@@ -167,7 +197,10 @@ class _RegisterPageState extends State<RegisterPage> {
             content: Padding(
               padding: const EdgeInsets.all(8.0),
               // pin input
-              child: pin,
+              child: TextFormField(
+                controller: _codeController,
+                decoration: const InputDecoration(labelText: 'xxxxxx'),
+              ),
             ),
             contentPadding: EdgeInsets.all(10.0),
             actions: <Widget>[
@@ -194,14 +227,13 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: EdgeInsets.all(8.0),
             child: Column(
               children: <Widget>[
-                SizedBox(height: 45),
+                SizedBox(height: 35),
                 Image(
                   alignment: Alignment.center,
-                  height: 150,
-                  width: 150,
+                  height: 120,
+                  width: 140,
                   image: AssetImage("images/logo.png"),
                 ),
-                
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(children: <Widget>[
@@ -256,7 +288,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       Navigator.pushNamedAndRemoveUntil(
                           context, LoginPage.id, (route) => false);
                     },
-                    child: Text('Vous avez déjà un compte ? Connectez-vous ici'))
+                    child:
+                        Text('Vous avez déjà un compte ? Connectez-vous ici'))
               ],
             ),
           ),

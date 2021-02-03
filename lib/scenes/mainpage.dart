@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ff_contact_avatar/ff_contact_avatar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_geofire/flutter_geofire.dart';
@@ -23,12 +24,14 @@ import 'package:tProject/scenes/points.dart';
 import 'package:tProject/scenes/profile.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/searchpage.dart';
+import 'package:tProject/scenes/support.dart';
 import 'package:tProject/styles/drawer.dart';
 import 'package:tProject/helpers/helpermethodes.dart';
 import 'package:tProject/widgets/collectpaiement.dart';
 import 'package:tProject/widgets/nodriver.dart';
 import 'package:tProject/widgets/rating.dart';
 import 'package:tProject/widgets/taxibutton.dart';
+import 'package:toast/toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../globals.dart';
 
@@ -47,6 +50,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   String rideId;
   var listener;
   var fares;
+
+  var driver_id;
+
+  bool companyIsActive = false;
+
+  void showToast(String msg, {int duration, int gravity}) {
+    Toast.show(msg, context, duration: duration, gravity: gravity);
+  }
+
   int i = 0;
   bool isRequestingLocationDetails = false;
   String appState = 'NORMAL';
@@ -68,6 +80,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   var showvalue = false;
 
   var diver_phone;
+  var id;
 
   var driver_name;
 
@@ -83,6 +96,21 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     } else {
       throw 'Could not launch $url';
     }
+  }
+
+  void checkifEntrepriseActive() async {
+    print(currentUserInfo.entreprise);
+    await FirebaseFirestore.instance
+        .collection('Companies')
+        .where('code', isEqualTo: currentUserInfo.entreprise)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      setState(() {
+        print(querySnapshot.docs);
+        print(querySnapshot.docs[0]);
+        companyIsActive = querySnapshot.docs[0].data()['status'] != "Suspended";
+      });
+    });
   }
 
   void noDriverFound() {
@@ -121,7 +149,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     print('i am rideref');
     print(rideRef);
     //var driver_token;
-    var driverToken = await FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('drivers')
         .doc(driver.key)
         .get()
@@ -138,7 +166,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     // send notification to selected driver
     await HelperMethods.sendAndRetrieveMessage(driver_token, rideRef);
     const oneSecTick = Duration(seconds: 1);
-    var timer = Timer.periodic(oneSecTick, (timer) {
+    Timer.periodic(oneSecTick, (timer) {
       // stop timer when ride request is cancelled;
       if (appState != 'REQUESTING') {
         driverTripRef.update({'newtrip': 'cancelled'});
@@ -153,6 +181,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           timer.cancel();
           driverRequestTimeout = 30;
         }
+
         if (event.data()['newtrip'] == 'declined') {
           listener.cancel();
           timer.cancel();
@@ -256,6 +285,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     // rest of your code
   }
 
+  String greeting() {
+    var hour = DateTime.now().hour;
+    
+    if (hour < 12) {
+      return 'Bonjour';
+    }
+    if (hour >= 12 && hour < 17) {
+      return 'Bonne après-midi';
+    }
+    if (hour >= 17) {
+      return 'Bonsoir';
+    }
+  }
+
   void startGeoFireListener() {
     Geofire.initialize('driversAvailable');
     Geofire.queryAtLocation(
@@ -264,7 +307,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       if (map != null) {
         var callBack = map['callBack'];
         print('maaaaaapppppp----------------------------');
-        print(map['callback']);
+
         switch (callBack) {
           case Geofire.onKeyEntered:
             NearByDriver nearbyDriver = NearByDriver();
@@ -273,11 +316,21 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             nearbyDriver.key = map['key'];
             nearbyDriver.latitude = map['latitude'];
             nearbyDriver.longitude = map['longitude'];
+            nearbyDriver.distance = distanceBetween(
+                currentPosition.latitude,
+                currentPosition.longitude,
+                nearbyDriver.latitude,
+                nearbyDriver.longitude);
+
             print('adding');
             setState(() {
               int index = FireHelper.nearbyDriverList
                   .indexWhere((element) => element.key == driver.key);
-              if (index < 0) FireHelper.nearbyDriverList.add(nearbyDriver);
+              if (index < 0) {
+                FireHelper.nearbyDriverList.add(nearbyDriver);
+                FireHelper.nearbyDriverList
+                    .sort((a, b) => a.distance.compareTo(b.distance));
+              }
             });
 
             print(FireHelper.nearbyDriverList);
@@ -298,6 +351,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             nearByDriver.key = map['key'];
             nearByDriver.latitude = map['latitude'];
             nearByDriver.longitude = map['longitude'];
+            nearByDriver.distance = distanceBetween(
+                currentPosition.latitude,
+                currentPosition.longitude,
+                nearByDriver.latitude,
+                nearByDriver.longitude);
+
             FireHelper.updateNearbyLocation(nearByDriver);
             updateDriversOnMap();
 
@@ -322,6 +381,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   void showDetailsSheet() async {
     await getDirection();
+    if (currentUserInfo.entreprise != "AUCUNE" &&
+        currentUserInfo.entreprise != "") await checkifEntrepriseActive();
     setState(() {
       searchSheetHeight = 0;
       rideDetailsHeight = (Platform.isAndroid) ? 200 : 260;
@@ -399,37 +460,47 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       key: scaffoldkey,
       resizeToAvoidBottomInset: false,
       drawer: Container(
+        //key: scaffoldkey,
         width: 250,
-        color: BrandColors.colorOrangeclair,
+        color: BrandColors.colorGrey,
         child: Container(
-          color: BrandColors.colorOrangeclair,
+          color: BrandColors.colorGrey,
           child: Drawer(
             child: Container(
-              color: BrandColors.colorOrangeclair,
+              color: BrandColors.colorGrey,
               child: ListView(
                 padding: EdgeInsets.all(0),
                 children: <Widget>[
                   Container(
-                    height: 160,
-                    child: DrawerHeader(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
+                    height: 140,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: BrandColors.colorOrangeclair,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 30),
+                        child: FFContactAvatar(
+                          name: (currentUserInfo.nom != null &&
+                                  currentUserInfo.prenom != null)
+                              ? '${currentUserInfo.nom} ${currentUserInfo.prenom}'
+                              : 'Bienvenu',
+                          message: '',
+                          showBadge: false,
                         ),
-                        child: Row(children: <Widget>[
+                      ),
+                    ),
+
+                    /*
                           Image.asset(
                             "images/user_icon.png",
-                            height: 60,
+                            height: 45,
                             width: 60,
                           ),
-                          SizedBox(
-                            height: 20,
-                          ),
+                          */
+                    /*
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              SizedBox(
-                                height: 5,
-                              ),
                               FlatButton(
                                 onPressed: () {},
                                 child: Text(
@@ -438,14 +509,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                       ? '${currentUserInfo.nom} ${currentUserInfo.prenom}'
                                       : 'Bienvenu',
                                   style: TextStyle(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontSize: 14,
                                       fontFamily: 'Brand-Bold'),
                                 ),
                               )
                             ],
                           )
-                        ])),
+                          */
                   ),
                   SizedBox(
                     height: 10,
@@ -470,24 +541,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       }),
                   ListTile(
                       leading: Icon(Icons.history, color: Colors.white),
-                      title: Text('Histaurique', style: kDrawerItemStyle),
+                      title: Text('Historique', style: kDrawerItemStyle),
                       onTap: () async {
-                        
                         await Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => HistoryPage())); 
+                                builder: (context) => HistoryPage()));
                       }),
                   ListTile(
                       leading: Icon(Icons.headset, color: Colors.white),
                       title: Text('Support', style: kDrawerItemStyle),
                       onTap: () async {
-                        /*
-                        await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => MyPoints()));
-                                */
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => Support()));
                       }),
                   ListTile(
                       leading: Icon(Icons.all_out, color: Colors.white),
@@ -604,7 +670,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       Text(
                           currentUserInfo.nom != null &&
                                   currentUserInfo.prenom != null
-                              ? 'Bonjour ${currentUserInfo.nom} ${currentUserInfo.prenom} '
+                              ? '${greeting()} ${currentUserInfo.nom} ${currentUserInfo.prenom} '
                               : 'Bienvenu',
                           style: TextStyle(
                               fontSize: 18,
@@ -636,13 +702,18 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       SizedBox(height: 10),
                       GestureDetector(
                         onTap: () async {
-                          var response = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SearchPAGE()));
-                          if (response == 'getDirection') {
-                            showDetailsSheet();
-                          }
+                          if (Provider.of<AppData>(context, listen: false)
+                                  .pickupAddress !=
+                              null) {
+                            var response = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SearchPAGE()));
+                            if (response == 'getDirection') {
+                              showDetailsSheet();
+                            }
+                          } else
+                            showToast('en cours de localisation');
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -659,7 +730,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             padding: const EdgeInsets.all(10.0),
                             child: Row(
                               children: <Widget>[
-                                Icon(Icons.search, color: Colors.blueAccent),
+                                Icon(Icons.search,
+                                    color: BrandColors.colorOrangeclair),
                                 SizedBox(
                                   width: 10,
                                 ),
@@ -687,7 +759,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               curve: Curves.easeIn,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: BrandColors.colorGrey,
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(15),
                       topRight: Radius.circular(15)),
@@ -703,18 +775,21 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 height: rideDetailsHeight,
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 18.0),
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Column(
                       children: [
                         Container(
                           width: double.infinity,
-                          color: Colors.white,
+                          color: BrandColors.colorGrey,
                           child: Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 16.0),
                             child: Row(
                               children: [
-                                Text('Total'),
+                                Text(
+                                  'Total',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                                 SizedBox(
                                   width: 16,
                                 ),
@@ -722,78 +797,112 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text((tripDirectionDetails != null)
-                                          ? tripDirectionDetails.distanceText
-                                          : ''),
-                                      Text('km')
+                                      Text(
+                                          fares == null
+                                              ? (tripDirectionDetails != null)
+                                                  ? HelperMethods.estimateFares(
+                                                          tripDirectionDetails) +
+                                                      ' DZD'
+                                                  : ''
+                                              : fares.toString() + 'DZD',
+                                          style:
+                                              TextStyle(color: Colors.white)),
                                     ]),
                                 Expanded(
                                   child: Container(),
                                 ),
-                                Text(fares == null
-                                    ? (tripDirectionDetails != null)
-                                        ? HelperMethods.estimateFares(
-                                            tripDirectionDetails)
-                                        : ''
-                                    : fares.toString()),
+                                Text('Distance',
+                                    style: TextStyle(color: Colors.white)),
+                                SizedBox(width: 2),
+                                Text(
+                                    (tripDirectionDetails != null)
+                                        ? tripDirectionDetails.distanceText
+                                        : '',
+                                    style: TextStyle(color: Colors.white)),
                               ],
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 2,
-                        ),
-                        (currentUserInfo.entreprise != "AUCUNE")
+                        (companyIsActive == true)
                             ? Row(
                                 children: [
                                   Checkbox(
-                                    checkColor: Colors.greenAccent,
+                                    checkColor: Colors.green,
                                     value: showvalue,
                                     onChanged: (bool value) {
                                       setState(() {
                                         showvalue = value;
-                                        if (value == true)
+                                        if (value == true) {
+                                          rideDetailsHeight = 125;
                                           fares = 0;
-                                        else
+                                        } else {
+                                          rideDetailsHeight = 200;
                                           checkCodePromo();
+                                        }
                                       });
                                     },
                                   ),
                                   Text(
-                                      'utiliser code entreprise ${currentUserInfo.entreprise}')
+                                    'utiliser code entreprise ${currentUserInfo.entreprise}',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 ],
                               )
                             : Container(),
+                        SizedBox(height: 20),
                         showvalue == false
-                            ? Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(children: <Widget>[
-                                  TextField(
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
+                                child: Theme(
+                                  data: new ThemeData(
+                                    primaryColor: Colors.white,
+                                    primaryColorDark: Colors.white,
+                                  ),
+                                  child: TextField(
                                     controller: CodePromoController,
                                     keyboardType: TextInputType.text,
                                     decoration: InputDecoration(
-                                        labelText: 'Code ',
-                                        errorStyle: TextStyle(),
+                                        contentPadding: EdgeInsets.only(
+                                            bottom: -5, left: 6),
+                                        border: new OutlineInputBorder(
+                                            borderSide: new BorderSide(
+                                                color: Colors.white)),
+                                        labelText: 'Code Promo',
+                                        errorStyle:
+                                            TextStyle(color: Colors.white),
                                         errorText: errorCodePromo == false
                                             ? ' '
                                             : error,
-                                        labelStyle: TextStyle(fontSize: 14.0),
+                                        labelStyle: TextStyle(
+                                            fontSize: 12.0,
+                                            color: Colors.white),
                                         hintStyle: TextStyle(
-                                          color: Colors.grey,
+                                          color: Colors.white,
                                         )),
-                                    style: TextStyle(fontSize: 14),
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.white),
                                   ),
-                                ]),
+                                ),
                               )
                             : Container(),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 TaxiButton(
-                                  title: 'valider',
-                                  color: BrandColors.colorGrey,
+                                  textcol: Colors.black,
+                                  title: 'Annuler',
+                                  color: Colors.white,
+                                  onPressed: () {
+                                    resetApp();
+                                  },
+                                ),
+                                SizedBox(width: 30),
+                                TaxiButton(
+                                  title: 'Valider',
+                                  color: BrandColors.colorOrangeclair,
                                   onPressed: () async {
                                     if (CodePromoController.text != "") {
                                       checkCodePromo();
@@ -808,36 +917,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                       showRequestingSheet();
                                       //SendToNearbyDrivers();
                                     }
-
-                                    //print(promotionValue);
-                                    /*
-                                    if (CodePromoController.text != "") {
-                                      var x = checkCodePromo();
-                                      print(x);
-                                      if (x != 0) {
-                                        showRequestingSheet();
-                                        SendToNearbyDrivers();
-                                      } else {
-                                        print(' je suis la ');
-                                        setState(() {
-                                          error = "invalid";
-                                          errorCodePromo = true;
-                                        });
-                                      }
-                                    } else {
-                                      
-                                      showRequestingSheet();
-                                      SendToNearbyDrivers();
-                                    }
-                                  */
-                                  },
-                                ),
-                                SizedBox(width: 30),
-                                TaxiButton(
-                                  title: 'Annuler',
-                                  color: BrandColors.colorOrangeclair,
-                                  onPressed: () {
-                                    resetApp();
                                   },
                                 ),
                               ]),
@@ -849,6 +928,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
               ),
             ),
           ),
+
           // searhing car request
           Positioned(
             left: 0,
@@ -1011,13 +1091,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         Row(
                           children: [
                             Text(
-                              driver_prenom != null ? driver_prenom : 't',
-                              style:
-                                  TextStyle(color: BrandColors.colorTextLight),
+                              driver_prenom != null
+                                  ? driver_prenom
+                                  : 'Chauffeur',
+                              style: TextStyle(fontSize: 20),
                             ),
                             SizedBox(width: 20),
                             Text(
-                              driver_name != null ? driver_name : 'e',
+                              driver_name != null
+                                  ? driver_name
+                                  : 'Ziouane ViteVite',
                               style: TextStyle(fontSize: 20),
                             ),
                           ],
@@ -1120,7 +1203,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _circles.clear();
       tripSheetHeight = 0;
       rideDetailsHeight = 0;
-      searchSheetHeight = (Platform.isAndroid) ? 195 : 200;
+      searchSheetHeight = (Platform.isAndroid) ? 170 : 170;
       mapBottomPadding = (Platform.isAndroid) ? 240 : 230;
       drawerCanOpen = true;
       tripStatusDisplay = 'Driver is Arriving';
@@ -1162,12 +1245,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     DirectionDetails thisDetails =
         await HelperMethods.getDirectionDetails(pickLatLng, destinationLatLng);
-    setState(() {
-      tripDirectionDetails = thisDetails;
-    });
 
-    print('detaaaiiilllsss');
-    //print(thisDetails);
+    tripDirectionDetails = thisDetails;
 
     //pr.hide();
     PolylinePoints polylinePoints = PolylinePoints();
@@ -1283,16 +1362,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'place': destination.placeName
     };
 
-    Map rideMap = {
-      'created_at': DateTime.now().toString(),
-      'rider_phone': currentFirebaseUser.phoneNumber,
-      'rider_id': currentFirebaseUser.uid,
-      'pickup': pickupMap,
-      'destination': destinationMap,
-      'driver_id': 'waiting',
-      'prix': fares
-    };
-    currentUserInfo.trips.add(rideMap);
     Map promotionMap = {'codePromo': '', 'promotion': ''};
     if (promotionValue != null) {
       promotionMap = {
@@ -1306,6 +1375,17 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         'promotion': promotionValue,
       };
     }
+    Map rideMap = {
+      'created_at': DateTime.now().toString(),
+      'rider_phone': currentFirebaseUser.phoneNumber,
+      'rider_id': currentFirebaseUser.uid,
+      'pickup': pickupMap,
+      'destination': destinationMap,
+      'driver_id': 'waiting',
+      'prix': fares,
+      'promotion': promotionMap
+    };
+    currentUserInfo.trips.add(rideMap);
 
     await FirebaseFirestore.instance.collection('rideRequests').add({
       'status': 'waiting',
@@ -1319,8 +1399,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       'promotion': promotionMap,
     }).then((value) => {
           setState(() {
-            print('heeeeereeeeeeeeee-----------');
-            print(value.id);
             rideRef = value.id;
             rideId = value.id;
             print('i am ride ref $rideRef');
@@ -1333,16 +1411,24 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     reference.snapshots().listen((querySnapshot) async {
       if (querySnapshot.data()['status'] == 'accepted') {
-        print('i am here not waiting ');
         await setState(() {
+          print(querySnapshot.data());
           diver_phone = querySnapshot.data()['driver_phone'];
           driver_name = querySnapshot.data()['driver_name'];
           driver_prenom = querySnapshot.data()['driver_prenom'];
+          id = querySnapshot.data()['id'];
           status = querySnapshot.data()['status'];
-          currentUserInfo.trips[-1]['driver_phone'] = diver_phone;
-          currentUserInfo.trips[-1]['driver_name'] = driver_name;
-          currentUserInfo.trips[-1]['driver_prenom'] = driver_prenom;
-          currentUserInfo.trips[-1]['requestRef'] = rideRef;
+          print('i am current user info ${currentUserInfo.trips}');
+          print('i am current user info ${currentUserInfo.trips.length}');
+          currentUserInfo.trips[currentUserInfo.trips.length - 1]
+              ['driver_phone'] = diver_phone;
+          currentUserInfo.trips[currentUserInfo.trips.length - 1]
+              ['driver_name'] = driver_name;
+          currentUserInfo.trips[currentUserInfo.trips.length - 1]
+              ['driver_prenom'] = driver_prenom;
+          currentUserInfo.trips[currentUserInfo.trips.length - 1]
+              ['requestRef'] = rideRef;
+          currentUserInfo.trips[currentUserInfo.trips.length - 1]['id'] = id;
           FirebaseFirestore.instance
               .collection('users')
               .doc(currentFirebaseUser.uid)
@@ -1392,21 +1478,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
           if (response == 'close') {
             var response2 = await showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext context) => Rating(ref:rideRef
-              
-            ),
-          );
-          if(response2=='close')
-            resetApp();
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) => Rating(ref: rideRef),
+            );
+            if (response2 == 'close') resetApp();
           }
         }
       }
     });
     // Do something with change
-    print('here is ride reeeeefff $rideRef');
+
     availableDrivers = FireHelper.nearbyDriverList;
+    //reversing list
+    availableDrivers = availableDrivers.reversed.toList();
     findDriver();
   }
 

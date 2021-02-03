@@ -21,5 +21,6 @@ class Userx {
   Userx.fromSnapshot(DataSnapshot snapshot) {
     this.id = snapshot.key;
     this.phone = snapshot.value['phone'];
+    this.entreprise = snapshot.value['entreprise'];
   }
 }

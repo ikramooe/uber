@@ -5,14 +5,13 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// ignore: duplicate_import
-import 'package:firebase_database/firebase_database.dart';
+
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:tProject/datamodels/address.dart';
 import 'package:tProject/datamodels/datadetails.dart';
-import 'package:tProject/datamodels/user.dart';
 import 'package:tProject/dataproviders/appdata.dart';
 import 'package:tProject/globals.dart';
 import 'package:geolocator/geolocator.dart';
@@ -34,8 +33,10 @@ class HelperMethods {
       currentUserInfo.phone = value.data()['phone'];
       currentUserInfo.nom = value.data()['nom'];
       currentUserInfo.prenom = value.data()['prenom'];
-      currentUserInfo.trips = value.data()['trips'];
-
+      currentUserInfo.trips = [];
+      if (value.data()['trips'] != null)
+        currentUserInfo.trips = value.data()['trips'];
+        
       currentUserInfo.date_naiss =
           DateTime.parse(value.data()['date_naiss'].toDate().toString());
       if (value.data()['entreprise'] != null) {
@@ -72,8 +73,8 @@ class HelperMethods {
       body: jsonEncode(
         <String, dynamic>{
           'notification': <String, dynamic>{
-            'body': 'this is a body',
-            'title': 'this is a title'
+            'body': 'Nouvelle demande',
+            'title': 'Ziouane vitevite '
           },
           'priority': 'high',
           'data': <String, dynamic>{
@@ -161,7 +162,7 @@ class HelperMethods {
     //duree en minutes
     // ignore: unused_local_variable
     double timeFare = (details.distanceValue / 60);
-
-    return distanceFare.toString();
+   
+    return distanceFare.toStringAsFixed(2);
   }
 }

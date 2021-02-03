@@ -39,11 +39,11 @@ class ReferralHelper {
           'https://tproject.page.link', // uri prefix used for Dynamic Links in Firebase Console
       link: Uri.parse(link),
       androidParameters: AndroidParameters(
-        packageName: 'com.example.tproject', // package name for your app
+        packageName: 'com.ziouane.orcloud', // package name for your app
         minimumVersion: 0,
       ),
       iosParameters: IosParameters(
-          bundleId: 'com.example.tproject'), // bundle ID for your app
+          bundleId: 'com.ziouane.orcloud'), // bundle ID for your app
     );
   }
 

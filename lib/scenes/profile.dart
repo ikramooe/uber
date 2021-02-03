@@ -51,9 +51,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void checkCodeCompany() async {
     checkCode = false;
+    print(CodeController.text);
     if (CodeController.text != currentUserInfo.code) if (CodeController.text !=
         "") {
-      //AllMovies.where((i) => i.isAnimated).toList();
       index = Entreprises_names.indexOf(CodeController.text);
       print('i am index $index');
       if (index >= 0) {
@@ -80,7 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
         updateUser(index);
       }
     } else
-      updateUser(index);
+      updateUser(null);
     else
       updateUser(null);
   }
@@ -99,7 +99,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'entreprise': CodeController.text,
       'date_naiss': selectedDate
     });
-    if (index != null) {
+    if (index != null && index>=0) {
       var currentCompany =
           FirebaseFirestore.instance.collection('Companies').doc(current.id);
       Map usersCode = {
@@ -109,9 +109,15 @@ class _ProfilePageState extends State<ProfilePage> {
       current.codes.removeAt(index);
       current.codes.add(usersCode);
       currentCompany.update({'codes': current.codes});
+
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentFirebaseUser.uid)
+          .update({'entreprise': CodeController.text});
     }
     showToast('Profile modifié avec succés');
-    Navigator.pushNamedAndRemoveUntil(context, MainPage.id, (route) => false);
+    HelperMethods.getCurrent();
+    //Navigator.pushNamedAndRemoveUntil(context, MainPage.id, (route) => false);
   }
 
   otpDialogBox(BuildContext context) {
@@ -181,7 +187,8 @@ class _ProfilePageState extends State<ProfilePage> {
     NameController.text = currentUserInfo.nom;
     PrenomController.text = currentUserInfo.prenom;
     PhoneController.text = currentUserInfo.phone;
-    if (currentUserInfo.entreprise != "AUCUNE") {
+    if (currentUserInfo.entreprise != "AUCUNE" &&
+        currentUserInfo.entreprise != "") {
       CodeController.text = currentUserInfo.entreprise;
     }
     if (currentUserInfo.date_naiss != null)
@@ -202,10 +209,24 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100.0),
+        child: AppBar(
+          title: Text('Profile'),
+          backgroundColor: BrandColors.colorOrange,
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(Icons.keyboard_arrow_left),
+          ),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
+              /*
               Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Stack(
@@ -240,90 +261,114 @@ class _ProfilePageState extends State<ProfilePage> {
               SizedBox(
                 height: 10,
               ),
+              */
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(children: <Widget>[
-                  TextField(
-                    controller: NameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        errorText:
-                            validNom == false ? 'Value Can\'t Be Empty' : null,
-                        labelText: 'Nom',
-                        labelStyle: TextStyle(fontSize: 14.0),
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                        )),
-                    style: TextStyle(fontSize: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                    child: TextField(
+                      controller: NameController,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                          errorText: validNom == false
+                              ? 'Value Can\'t Be Empty'
+                              : null,
+                          labelText: 'Nom',
+                          labelStyle: TextStyle(fontSize: 14.0),
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                          )),
+                      style: TextStyle(fontSize: 14),
+                    ),
                   ),
-                  TextField(
-                    controller: PrenomController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        errorText: validPrenom == false
-                            ? 'Value Can\'t Be Empty'
-                            : null,
-                        labelText: 'Prenom',
-                        labelStyle: TextStyle(fontSize: 14.0),
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                        )),
-                    style: TextStyle(fontSize: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                    child: TextField(
+                      controller: PrenomController,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                          errorText: validPrenom == false
+                              ? 'Value Can\'t Be Empty'
+                              : null,
+                          labelText: 'Prenom',
+                          labelStyle: TextStyle(fontSize: 14.0),
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                          )),
+                      style: TextStyle(fontSize: 14),
+                    ),
                   ),
                   SizedBox(height: 20),
                   GestureDetector(
                     onTap: () {
                       _selectDate(context);
                     },
-                    child: TextField(
-                      keyboardType: TextInputType.name,
-                      enabled: false,
-                      controller: TextEditingController(
-                          text: "${selectedDate.toLocal()}".split(' ')[0]),
-                      decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          labelText: 'Date de naissance ',
-                          labelStyle: TextStyle(fontSize: 14.0),
-                          hintStyle: TextStyle(color: Colors.red)),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                      child: TextField(
+                        keyboardType: TextInputType.name,
+                        enabled: false,
+                        controller: TextEditingController(
+                            text: "${selectedDate.toLocal()}".split(' ')[0]),
+                        decoration: InputDecoration(
+                            contentPadding:
+                                EdgeInsets.symmetric(horizontal: 10),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            labelText: 'Date de naissance ',
+                            labelStyle: TextStyle(fontSize: 14.0),
+                            hintStyle: TextStyle(color: Colors.red)),
+                      ),
                     ),
                   ),
-                  InternationalPhoneInput(
-                    onPhoneNumberChange: onPhoneNumberChange,
-                    initialSelection: phoneIsoCode,
-                    enabledCountries: ['+213'],
-                    labelText: "Telephone",
-                    showCountryCodes: true,
-                    initialPhoneNumber: PhoneController.text,
-                    decoration: InputDecoration(fillColor: Colors.white),
-                    showCountryFlags: true,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                    child: InternationalPhoneInput(
+                      onPhoneNumberChange: onPhoneNumberChange,
+                      initialSelection: phoneIsoCode,
+                      enabledCountries: ['+213'],
+                      labelText: "Telephone",
+                      showCountryCodes: true,
+                      initialPhoneNumber: PhoneController.text,
+                      decoration: InputDecoration(fillColor: Colors.white),
+                      showCountryFlags: true,
+                    ),
                   ),
                   SizedBox(height: 10),
-                  Text(
-                      'si vous faites partie d\'une entreprise introduisez votre code'),
-                  TextField(
-                    controller: CodeController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText: 'votre code',
-                        labelStyle: TextStyle(fontSize: 14.0),
-                        errorStyle: TextStyle(),
-                        errorText: errorText,
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                        )),
-                    style: TextStyle(fontSize: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                    child: Text(
+                        'si vous faites partie d\'une entreprise introduisez votre code'),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 24.0, left: 24.0),
+                    child: TextField(
+                      controller: CodeController,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                          labelText: 'votre code',
+                          labelStyle: TextStyle(fontSize: 14.0),
+                          errorStyle: TextStyle(),
+                          errorText: errorText,
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                          )),
+                      style: TextStyle(fontSize: 14),
+                    ),
                   ),
                   SizedBox(
                     height: 20,
                   ),
-                  TaxiButton(
-                      title: 'Modifier',
-                      color: BrandColors.colorGrey,
-                      onPressed: () {
-                        checkCodeCompany();
-                      }),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24.0, right: 24.0),
+                    child: TaxiButton(
+                        title: 'Modifier',
+                        color: BrandColors.colorGrey,
+                        onPressed: () {
+                          checkCodeCompany();
+                        }),
+                  ),
                 ]),
               ),
             ],

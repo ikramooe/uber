@@ -11,6 +11,7 @@ import 'package:tProject/scenes/mainpage.dart';
 import 'package:tProject/scenes/riderlogin.dart';
 import 'package:tProject/scenes/riderphone.dart';
 import 'package:tProject/scenes/riderregister.dart';
+import 'package:tProject/scenes/support.dart';
 
 import 'datamodels/company.dart';
 import 'dataproviders/appdata.dart';
@@ -58,14 +59,15 @@ class MyApp extends StatelessWidget {
       create: (context) => AppData(),
       child: MaterialApp(
         theme: ThemeData(fontFamily: 'Brand-Regular'),
-        initialRoute:
-            currentFirebaseUser == null ? RegisterPage.id : MainPage.id,
+        initialRoute:currentFirebaseUser ==null ? RegisterPage.id: MainPage.id ,
         routes: {
           RegisterPage.id: (context) => RegisterPage(),
+          
           HistoryPage.id: (context) => HistoryPage(),
           LoginPage.id: (context) => LoginPage(),
           MainPage.id: (context) => MainPage(),
           PhoneRegisterPage.id: (context) => PhoneRegisterPage()
+          
         },
       ),
     );

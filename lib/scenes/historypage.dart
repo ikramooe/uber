@@ -12,22 +12,23 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  @override
-  initState()  {
-    
-  }
+  
 
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Histaurique'),
-        backgroundColor: BrandColors.colorPrimary,
+      backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100.0),
+        child: AppBar(
+        title: Text('Historique'),
+        backgroundColor: BrandColors.colorOrange,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
           icon: Icon(Icons.keyboard_arrow_left),
         ),
+      ),
       ),
       body: ListView.separated(
         padding: EdgeInsets.all(0),

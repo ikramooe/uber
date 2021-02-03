@@ -5,7 +5,7 @@ class FireHelper {
 
   static void removeFromList(String key) {
     int index = nearbyDriverList.indexWhere((element) => element.key == key);
-
+    if(index >=0)
     nearbyDriverList.removeAt(index);
   }
 
@@ -17,7 +17,11 @@ class FireHelper {
     if (index >= 0) {
       nearbyDriverList[index].longitude = driver.longitude;
       nearbyDriverList[index].latitude = driver.latitude;
+      nearbyDriverList[index].distance = driver.distance;
+      
     } else
       nearbyDriverList.add(driver);
+    nearbyDriverList.sort((a, b) => a.distance.compareTo(b.distance));
+
   }
 }

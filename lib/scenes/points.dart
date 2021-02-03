@@ -15,63 +15,33 @@ class MyPoints extends StatefulWidget {
 }
 
 class _MyPointsState extends State<MyPoints> with TickerProviderStateMixin {
-  GlobalKey<ScaffoldState> scaffoldkey = new GlobalKey();
 
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      appBar: AppBar(
+        title: Text('Mes Points'),
+        backgroundColor: BrandColors.colorOrange,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(Icons.keyboard_arrow_left),
+        ),
+      ),
+      
       body: Container(
-        color:BrandColors.colorGreyclair,
+        color:BrandColors.colorOrange,
         child: Column(
           children: <Widget>[
             // Menu button
             Container(
-              height: 155,
+              height: 100,
               width: double.infinity,
               color: BrandColors.colorGrey,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: 20,
-                  ),
-                  Positioned(
-                    top: 44,
-                    left: 20,
-                    child: GestureDetector(
-                      onTap: () async {
-                        await Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => MainPage()));
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 5,
-                                spreadRadius: 0.5,
-                                offset: Offset(0.7, 0.7),
-                              )
-                            ]),
-                        child: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: 20,
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 60,
-                  ),
-                  SizedBox(
-                    width: 25,
-                  ),
+                  
                   Text('600 Points', style:TextStyle(color:Colors.white,fontSize:20) ),
                 ],
               ),
@@ -82,16 +52,16 @@ class _MyPointsState extends State<MyPoints> with TickerProviderStateMixin {
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Container(
-              
+                  color: BrandColors.colorGrey,
                   child: Card(
-                    color: Colors.white,
+                    color: BrandColors.colorGrey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         ListTile(
-                          leading: Icon(Icons.share,color:Colors.black),
+                          leading: Icon(Icons.share,color:Colors.white),
 
-                          title: Text(ReferralHelper.link.shortUrl.toString(),style:TextStyle(color:Colors.black)),
+                          title: Text(ReferralHelper.link.shortUrl.toString(),style:TextStyle(color:Colors.white)),
                           
                         ),
                         
@@ -112,13 +82,13 @@ class _MyPointsState extends State<MyPoints> with TickerProviderStateMixin {
                     height: 20,
                     child: Center(
                       child: Text(
-                        'Partagez le code pour gagner des points ',
+                        'Partagez votre code pour gagner des points ',
                         style: TextStyle(
-                            fontSize: 12, fontFamily: 'Brand-Bold',color:Colors.black),
+                            fontSize: 12, fontFamily: 'Brand-Bold',color:Colors.white),
                       ),
                     ),
                   ),
-                  color: Colors.white,
+                  color: BrandColors.colorGrey,
                   shape: new RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(),
                   ),
